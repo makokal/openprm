@@ -1,1 +1,14 @@
-Initial commit
+Basic Instructions (for those want to jump right in)
+Read the wiki (openprm.nyumbanilabs.com) for a more comprehensive documentation
+
+To compile, run the following:
+
+	[Ensure you have all  OpenRAVE installed, check openrave.programmingvision.com to see how]
+
+	mkdir build
+	cd build
+	cmake ../
+	make
+	make install
+
+	[Set up paths as explained in the wiki]
