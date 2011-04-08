@@ -98,13 +98,39 @@ bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersCons
 	_tTreeG.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
 	_tTreeS.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
 	
-	
+	RAVELOG_INFO("SBLPlanner Initialized\n");
 	return true;
 }
 
 bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > pOutStream)
 {
+	if (!_pParameters) 
+	{
+		RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
+		return false;
+	}
 
+	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+	uint32_t basetime = timeGetTime();
+	
+	RobotBase::RobotStateSaver savestate(_pRobot);
+	CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
+	
+	//! build tree and get a path
+	
+	/// create Trajectory from path found
+	OpenRAVE::Trajectory::TPOINT pt;
+    pt.q.resize(_pParameters->GetDOF());
+    
+    FOREACH ( itnode, _lPathNodes ) {
+        for ( int i = 0; i < _pParameters->GetDOF(); ++i ) {
+            pt.q[i] = (*itnode).nconfig[i];
+		}
+        ptraj->AddPoint(pt);
+    }
+
+    RAVELOG_DEBUGA(str(boost::format("plan success, path=%d points in %fs\n")%ptraj->GetPoints().size()%((0.001f*(float)(timeGetTime()-basetime)))));
+	
 	return true;
 }
 

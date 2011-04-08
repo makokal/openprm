@@ -129,7 +129,8 @@ bool VISPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparams )
 
 bool VISPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream )
 {
-	if(!_pParameters) {
+	if (!_pParameters) 
+	{
 		RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
 		return false;
 	}
