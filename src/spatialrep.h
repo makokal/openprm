@@ -53,7 +53,6 @@ namespace openprm
 {
 
 typedef dReal s_cost;
-
 typedef boost::adjacency_list<
 			boost::listS,
 			boost::vecS,
@@ -61,31 +60,39 @@ typedef boost::adjacency_list<
 			boost::no_property,
 			boost::property<boost::edge_weight_t, s_cost> >
 		s_graph;
-
 typedef s_graph::vertex_descriptor s_vertex;
-
 typedef  std::pair<s_vertex, s_vertex> s_edge;
-
 typedef boost::property_map<s_graph, boost::edge_weight_t>::type weight_map;
-
 typedef s_graph::edge_descriptor e_descriptor;
-
 typedef boost::graph_traits<s_graph>::out_edge_iterator out_edge_iterator;
-
 typedef boost::adjacency_iterator_generator<s_graph, s_vertex, out_edge_iterator>::type adjacency_iterator;
+
+//! for spatial tree used in SBL planner
+enum ExtendType 
+{
+    ET_Failed=0,
+    ET_Sucess=1,
+    ET_Connected=2
+};
 
 struct found_goal {};
 
-/* spatial node */
+//! Spatial Graph Node 
 struct s_node
 {
-    s_node() {}
-    s_node ( const config& conf, s_vertex v ) : nconfig ( conf ), vertex ( v ) {}
-    config nconfig;
-    s_vertex vertex;
+	s_node() {}
+	s_node ( const config& conf, s_vertex v ) : nconfig ( conf ), vertex ( v ) {}
+	config nconfig;
+	s_vertex vertex;
 };
 
-
+//! Spatial Tree Node
+struct t_node
+{
+	t_node(int parent, const vector<dReal>& q) : parent(parent), q(q) {}
+	int parent;
+	config q; 
+};
 
 /* A Star Goal visitor*/
 template <class Vertex>
@@ -379,8 +386,148 @@ protected:
     std::vector<s_node> node_list;
     s_graph p_graph;
     weight_map w_map;
+};
 
 
+template <typename Planner, typename Node>
+class SpatialTree 
+{
+public:
+    SpatialTree() 
+	{
+        _fStepLength = 0.04f;
+        _dof = 0;
+        _fBestDist = 0;
+        _nodes.reserve(5000);
+    }
+
+    ~SpatialTree(){}
+    
+    //! differentiate from reset provided by boost shared ptr
+    void cReset(boost::weak_ptr<Planner> planner, int dof=0)
+    {
+        _planner = planner;
+
+        typename vector<Node*>::iterator it;
+        FORIT(it, _nodes)
+            delete *it;
+        _nodes.resize(0);
+
+        if( dof > 0 ) {
+            _vNewConfig.resize(dof);
+            _dof = dof;
+        }   
+    }
+
+    virtual int AddNode(int parent, const vector<dReal>& config)
+    {
+        _nodes.push_back(new Node(parent,config));
+        return (int)_nodes.size()-1;
+    }
+
+    ///< return the nearest neighbor
+    virtual int GetNN(const vector<dReal>& q)
+    {
+        if( _nodes.size() == 0 ) {
+            return -1;
+        }
+        int ibest = -1;
+        dReal fbest = 0;
+        FOREACH(itnode, _nodes) {
+            dReal f = _distmetricfn(q, (*itnode)->q);
+            if( ibest < 0 || f < fbest ) {
+                ibest = (int)(itnode-_nodes.begin());
+                fbest = f;
+            }
+        }
+
+        _fBestDist = fbest;
+        return ibest;
+    }
+
+    virtual ExtendType Extend(const vector<dReal>& pTargetConfig, int& lastindex, bool bOneStep=false)
+    {
+        // get the nearest neighbor
+        lastindex = GetNN(pTargetConfig);
+        if( lastindex < 0 ) {
+            return ET_Failed;
+        }
+        Node* pnode = _nodes.at(lastindex);
+        bool bHasAdded = false;
+        boost::shared_ptr<Planner> planner(_planner);
+        PlannerBase::PlannerParametersConstPtr params = planner->GetParameters();
+        // extend
+        while(1) {
+            dReal fdist = _distmetricfn(pTargetConfig,pnode->q);
+            if( fdist > _fStepLength ) {
+                fdist = _fStepLength / fdist;
+            }
+            else if( fdist <= dReal(0.1) * _fStepLength ) { // return connect if the distance is very close
+                return ET_Connected;
+            }
+        
+            _vNewConfig = pTargetConfig;
+            params->_diffstatefn(_vNewConfig,pnode->q);
+            for(int i = 0; i < _dof; ++i)
+                _vNewConfig[i] = pnode->q[i] + _vNewConfig[i]*fdist;
+        
+            // project to constraints
+            if( !!params->_constraintfn ) {
+                params->_setstatefn(_vNewConfig);
+                if( !params->_constraintfn(pnode->q, _vNewConfig, 0) ) {
+                    if(bHasAdded) {
+                        return ET_Sucess;
+                    }
+                    return ET_Failed;
+                }
+
+                // it could be the case that the node didn't move anywhere, in which case we would go into an infinite loop
+                if( _distmetricfn(pnode->q, _vNewConfig) <= dReal(0.01)*_fStepLength ) {
+                    if(bHasAdded) {
+                        return ET_Sucess;
+                    }
+                    return ET_Failed;
+                }
+            }
+
+            if( CollisionFunctions::CheckCollision(params,planner->GetRobot(),pnode->q, _vNewConfig, IT_OpenStart) ) {
+                if(bHasAdded) {
+                    return ET_Sucess;
+                }
+                return ET_Failed;
+            }
+
+            lastindex = AddNode(lastindex, _vNewConfig);
+            pnode = _nodes[lastindex];
+            bHasAdded = true;
+            if( bOneStep ) {
+                return ET_Connected;
+            }
+        }
+    
+        return ET_Failed;
+    }
+
+    virtual const vector<dReal>& GetConfig(int inode) 
+	{ 
+		return _nodes.at(inode)->q; 
+		
+	}
+	
+    virtual int GetDOF() 
+	{ 
+		return _dof; 
+	}
+
+    vector<Node*> _nodes;
+    boost::function<dReal(const std::vector<dReal>&, const std::vector<dReal>&)> _distmetricfn;
+    dReal _fBestDist; ///< valid after a call to GetNN
+    dReal _fStepLength;
+
+private:
+    vector<dReal> _vNewConfig;
+    boost::weak_ptr<Planner> _planner;
+    int _dof;
 };
 
 }

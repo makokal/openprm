@@ -50,8 +50,64 @@ public:
 	virtual RobotBasePtr GetRobot() const; 
 	
 protected:
-	
+	RobotBasePtr _pRobot;
+	boost::shared_ptr<PRMParams> _pParameters;
+	boost::shared_ptr<SpatialTree<SBLPlanner, t_node> > _tTreeS;	//! tree from start config
+	boost::shared_ptr<SpatialTree<SBLPlanner, t_node> > _tTreeG;	//! tree from goal config
+	boost::shared_ptr<RandomSampler> _sampler;
+	std::list<s_node> _lPathNodes;
+	config _vRandomConfig;
 };
+
+SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
+{
+	__description = "SBL Planner (Billy Okal and S. Srinivasa)";
+	_vRandomConfig.clear();
+	_lPathNodes.clear();
+}
+
+
+SBLPlanner::~SBLPlanner() {}
+
+PlannerBase::PlannerParametersConstPtr SBLPlanner::GetParameters() const
+{
+    return _pParameters;
+}
+
+RobotBasePtr SBLPlanner::GetRobot() const
+{
+    return _pRobot;
+}
+
+bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersConstPtr pparams)
+{
+	RAVELOG_INFO("Initializing Planner\n");
+
+	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+	_pParameters.reset<PRMParams>(new PRMParams());
+	_pParameters->copy(pparams);
+	
+    // set up robot and the tsrchains
+    _pRobot = pbase;
+	
+	_vRandomConfig.resize(_pRobot->GetActiveDOF());
+	
+	_sampler.reset<RandomSampler>(new RandomSampler(_pRobot));
+// 	_sampler = new RandomSampler(_pRobot);
+	
+	_tTreeG.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
+	_tTreeS.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
+	
+	
+	return true;
+}
+
+bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > pOutStream)
+{
+
+	return true;
+}
+
 
 }
 
