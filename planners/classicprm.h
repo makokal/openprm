@@ -27,6 +27,7 @@
 
 /**
  * \file classicprm.h
+ * \author Billy Okal
  * \brief Implementation of the BasicPRM algorithm
  */
 
@@ -56,7 +57,8 @@ protected:
     RobotBasePtr p_robot;
     boost::shared_ptr<PRMParams> p_parameters;
     SpatialGraph* g_roadmap;
-    RandomSampler* p_sampler;
+//    RandomSampler* p_sampler;
+    boost::shared_ptr<RandomSampler> p_sampler;
     std::list<spatial_node> l_pathnodes;
     v_config v_random_config;
     vv_config_set vv_cs_samples;
@@ -114,7 +116,8 @@ bool ClassicPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparam
 
     v_random_config.resize(p_robot->GetActiveDOF());
 
-    p_sampler = new RandomSampler(p_robot);
+//    p_sampler = new RandomSampler(p_robot);
+    p_sampler.reset(new RandomSampler(p_robot));
 
     //TODO - add use of medges
     SpatialGraph g(p_parameters->iMnodes, p_parameters->fNeighthresh);
