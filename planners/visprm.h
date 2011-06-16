@@ -57,10 +57,10 @@ protected:
     vv_config_set vv_samples;
     spatial_node n_start, n_goal;
 
-    int _buildRoadMap();
-    bool _findPath();
-    bool _addStart();
-    bool _addGoal();
+    int buildRoadMap();
+    bool findPath();
+    bool addStartConfig();
+    bool addGoalConfig();
 
 
     inline virtual boost::shared_ptr<VISPRM> shared_planner()
@@ -118,7 +118,7 @@ bool VISPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparams )
     // 	_gRoadmap = &g;
 
     RAVELOG_INFO("VISPRM::building roadmap\n");
-    int nodes = _buildRoadMap();
+    int nodes = buildRoadMap();
 
     RAVELOG_INFO("VISPRM Initialized with Roadmap of [%d] Nodes\n", nodes);
     return true;
@@ -138,19 +138,19 @@ bool VISPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream>
     RobotBase::RobotStateSaver savestate(p_robot);
     CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
 
-    if ( !_addStart() )
+    if ( !addStartConfig() )
     {
         RAVELOG_ERROR("Start configuration not added to roadmap, planning abort\n");
         return false;
     }
 
-    if ( !_addGoal() )
+    if ( !addGoalConfig() )
     {
         RAVELOG_ERROR("Goal configuration not added to roadmap, planning abort\n");
         return false;
     }
 
-    if ( !_findPath() )
+    if ( !findPath() )
     {
         RAVELOG_ERROR("No path found\n");
         return false;
@@ -177,7 +177,7 @@ bool VISPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream>
  * Main distinguishing feature
  * Based on Visibility Graph
  */
-int VISPRM::_buildRoadMap()
+int VISPRM::buildRoadMap()
 {
     // Generate samples from the CSpace
     int i = 0;
@@ -230,7 +230,7 @@ int VISPRM::_buildRoadMap()
     return g_roadmap->getNodes();
 }
 
-bool VISPRM::_findPath(spatial_node _start, spatial_node _goal)
+bool VISPRM::findPath(spatial_node _start, spatial_node _goal)
 {	
     if ( g_roadmap->findPathAS(_start, _goal, l_pathnodes) )
     {
@@ -246,7 +246,7 @@ bool VISPRM::_findPath(spatial_node _start, spatial_node _goal)
     return false;
 }
 
-bool VISPRM::_addStart()
+bool VISPRM::addStartConfig()
 {
     if ((int)p_parameters->vinitialconfig.size() != p_robot->GetActiveDOF())
     {
@@ -298,7 +298,7 @@ bool VISPRM::_addStart()
     return true;
 }
 
-bool VISPRM::_addGoal()
+bool VISPRM::addGoalConfig()
 {
     if ((int)p_parameters->vgoalconfig.size() != p_robot->GetActiveDOF())
     {
