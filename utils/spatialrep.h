@@ -52,12 +52,12 @@ namespace openprm
 
 typedef dReal graph_cost;
 typedef boost::adjacency_list<
-			boost::listS,
-			boost::vecS,
-			boost::undirectedS,
-			boost::no_property,
-                        boost::property<boost::edge_weight_t, graph_cost> >
-                spatial_graph;
+boost::listS,
+boost::vecS,
+boost::undirectedS,
+boost::no_property,
+boost::property<boost::edge_weight_t, graph_cost> >
+spatial_graph;
 typedef spatial_graph::vertex_descriptor spatial_vertex;
 typedef  std::pair<spatial_vertex, spatial_vertex> spatial_edge;
 typedef boost::property_map<spatial_graph, boost::edge_weight_t>::type weight_map;
@@ -78,18 +78,18 @@ struct found_goal {};
 //! Spatial Graph Node 
 struct spatial_node
 {
-        spatial_node() {}
-        spatial_node ( const v_config& conf, spatial_vertex v ) : nconfig ( conf ), vertex ( v ) {}
-        v_config nconfig;
-        spatial_vertex vertex;
+    spatial_node() {}
+    spatial_node ( const v_config& conf, spatial_vertex v ) : nconfig ( conf ), vertex ( v ) {}
+    v_config nconfig;
+    spatial_vertex vertex;
 };
 
 //! Spatial Tree Node
 struct tree_node
 {
-        tree_node(int parent, const vector<dReal>& q) : parent(parent), q(q) {}
-	int parent;
-        v_config q;
+    tree_node(int parent, const vector<dReal>& q) : parent(parent), q(q) {}
+    int parent;
+    v_config q;
 };
 
 /** ======================================================================================= */
@@ -202,10 +202,10 @@ public:
         spatial_node nv = getNode ( v );
 
         dReal dist = DistMetric::Eval ( nu.nconfig, nv.nconfig );
-		if (dist > neigh_thresh)
-		{
-			return false;
-		}
+        if (dist > neigh_thresh)
+        {
+            return false;
+        }
 
         spatial_graph::edge_descriptor ed;
         bool inserted;
@@ -273,11 +273,11 @@ public:
         try
         {
             boost::astar_search (
-                p_graph,
-                start,
-                distance_heuristic<spatial_graph, graph_cost, spatial_node*> ( node_map, goal ),
-                boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<spatial_vertex> ( goal ) )
-            );
+                        p_graph,
+                        start,
+                        distance_heuristic<spatial_graph, graph_cost, spatial_node*> ( node_map, goal ),
+                        boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<spatial_vertex> ( goal ) )
+                        );
         }
         catch ( found_goal fg )
         {
@@ -401,7 +401,7 @@ class SpatialTree
 {
 public:
     SpatialTree() 
-	{
+    {
         _fStepLength = 0.04f;
         _dof = 0;
         _fBestDist = 0;
@@ -417,7 +417,7 @@ public:
 
         typename vector<Node*>::iterator it;
         FORIT(it, _nodes)
-            delete *it;
+                delete *it;
         _nodes.resize(0);
 
         if( dof > 0 ) {
@@ -472,12 +472,12 @@ public:
             else if( fdist <= dReal(0.1) * _fStepLength ) { // return connect if the distance is very close
                 return ET_Connected;
             }
-        
+
             _vNewConfig = pTargetConfig;
             params->_diffstatefn(_vNewConfig,pnode->q);
             for(int i = 0; i < _dof; ++i)
                 _vNewConfig[i] = pnode->q[i] + _vNewConfig[i]*fdist;
-        
+
             // project to constraints
             if( !!params->_constraintfn ) {
                 params->_setstatefn(_vNewConfig);
@@ -511,20 +511,20 @@ public:
                 return ET_Connected;
             }
         }
-    
+
         return ET_Failed;
     }
 
     virtual const vector<dReal>& GetConfig(int inode) 
-	{ 
-		return _nodes.at(inode)->q; 
-		
-	}
-	
+    {
+        return _nodes.at(inode)->q;
+
+    }
+
     virtual int GetDOF() 
-	{ 
-		return _dof; 
-	}
+    {
+        return _dof;
+    }
 
     vector<Node*> _nodes;
     boost::function<dReal(const std::vector<dReal>&, const std::vector<dReal>&)> _distmetricfn;

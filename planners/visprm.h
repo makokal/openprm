@@ -40,136 +40,136 @@ class VISPRM : public PlannerBase
 public:
     VISPRM ( EnvironmentBasePtr penv );
     virtual ~VISPRM();
-	
-	bool InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr pparams);
-	bool PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream);
-	virtual PlannerParametersConstPtr GetParameters() const;
-	virtual RobotBasePtr GetRobot() const; 
-	
+
+    bool InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr pparams);
+    bool PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream);
+    virtual PlannerParametersConstPtr GetParameters() const;
+    virtual RobotBasePtr GetRobot() const;
+
 protected:
-	RobotBasePtr _pRobot;
-	boost::shared_ptr<PRMParams> _pParameters;
-	boost::shared_ptr<SpatialGraph> _gRoadmap;
-	boost::shared_ptr<RandomSampler> _sampler;
-// 	RandomSampler* _sampler;
-	std::list<spatial_node> _lPathNodes;
-        v_config _vRandomConfig;
-        vv_config_set _vvSamples;
-	spatial_node _nStart, _nGoal;
-	
-	int _buildRoadMap();
-	bool _findPath();
-	bool _addStart();
-	bool _addGoal();
-	
-	
-	inline virtual boost::shared_ptr<VISPRM> shared_planner()
-	{
-		return boost::static_pointer_cast<VISPRM>(shared_from_this()); 
-	}
-	
-	inline virtual boost::shared_ptr<VISPRM const> shared_planner_const() const
-	{
-		return boost::static_pointer_cast<VISPRM const>(shared_from_this()); 
-	}
+    RobotBasePtr p_robot;
+    boost::shared_ptr<PRMParams> p_parameters;
+    boost::shared_ptr<SpatialGraph> g_roadmap;
+    boost::shared_ptr<RandomSampler> p_sampler;
+    // 	RandomSampler* _sampler;
+    std::list<spatial_node> l_pathnodes;
+    v_config v_random_config;
+    vv_config_set vv_samples;
+    spatial_node n_start, n_goal;
+
+    int _buildRoadMap();
+    bool _findPath();
+    bool _addStart();
+    bool _addGoal();
+
+
+    inline virtual boost::shared_ptr<VISPRM> shared_planner()
+    {
+        return boost::static_pointer_cast<VISPRM>(shared_from_this());
+    }
+
+    inline virtual boost::shared_ptr<VISPRM const> shared_planner_const() const
+    {
+        return boost::static_pointer_cast<VISPRM const>(shared_from_this());
+    }
 };
 
 
 ///Implems
 VISPRM::VISPRM ( EnvironmentBasePtr penv ) : PlannerBase ( penv )
 {
-	__description = " Visibility PRM Planner ";
-    _vRandomConfig.clear();
-    _vvSamples.clear();
-    _lPathNodes.clear();
+    __description = " Visibility PRM Planner ";
+    v_random_config.clear();
+    vv_samples.clear();
+    l_pathnodes.clear();
 }
 
 VISPRM::~VISPRM() {}
 
 PlannerBase::PlannerParametersConstPtr VISPRM::GetParameters() const
 {
-    return _pParameters;
+    return p_parameters;
 }
 
 RobotBasePtr VISPRM::GetRobot() const
 {
-    return _pRobot;
+    return p_robot;
 }
 
 bool VISPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparams )
 {
-	RAVELOG_INFO("Initializing Planner\n");
+    RAVELOG_INFO("Initializing Planner\n");
 
-	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
-	_pParameters.reset<PRMParams>(new PRMParams());
-	_pParameters->copy(pparams);
-	
+    EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+    p_parameters.reset<PRMParams>(new PRMParams());
+    p_parameters->copy(pparams);
+
     // set up robot and the tsrchains
-    _pRobot = pbase;
-	
-	_vRandomConfig.resize(_pRobot->GetActiveDOF());
-	
-	_sampler.reset<RandomSampler>(new RandomSampler(_pRobot));
-// 	_sampler = new RandomSampler(_pRobot);
-	
-	//TODO - add use of medges
-	_gRoadmap.reset<SpatialGraph>(new SpatialGraph);
-// 	SpatialGraph g(_pParameters->iMnodes, _pParameters->fNeighthresh);
-// 	_gRoadmap = &g;
-	
-	RAVELOG_INFO("VISPRM::building roadmap\n");
-	int nodes = _buildRoadMap();
+    p_robot = pbase;
 
-	RAVELOG_INFO("VISPRM Initialized with Roadmap of [%d] Nodes\n", nodes);
-	return true;
+    v_random_config.resize(p_robot->GetActiveDOF());
+
+    p_sampler.reset<RandomSampler>(new RandomSampler(p_robot));
+    // 	_sampler = new RandomSampler(_pRobot);
+
+    //TODO - add use of medges
+    g_roadmap.reset<SpatialGraph>(new SpatialGraph);
+    // 	SpatialGraph g(_pParameters->iMnodes, _pParameters->fNeighthresh);
+    // 	_gRoadmap = &g;
+
+    RAVELOG_INFO("VISPRM::building roadmap\n");
+    int nodes = _buildRoadMap();
+
+    RAVELOG_INFO("VISPRM Initialized with Roadmap of [%d] Nodes\n", nodes);
+    return true;
 }
 
 bool VISPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream )
 {
-	if (!_pParameters) 
-	{
-		RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
-		return false;
-	}
+    if (!p_parameters)
+    {
+        RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
+        return false;
+    }
 
-	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
-	uint32_t basetime = timeGetTime();
-	
-	RobotBase::RobotStateSaver savestate(_pRobot);
-	CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
-	
-	if ( !_addStart() )
-	{
-		RAVELOG_ERROR("Start configuration not added to roadmap, planning abort\n");
-		return false;
-	}
-	
-	if ( !_addGoal() )
-	{
-		RAVELOG_ERROR("Goal configuration not added to roadmap, planning abort\n");
-		return false;
-	}
-	
-	if ( !_findPath() )
-	{
-		RAVELOG_ERROR("No path found\n");
-		return false;
-	}
-	
-	/// create Trajectory from path found
-	OpenRAVE::Trajectory::TPOINT pt;
-    pt.q.resize(_pParameters->GetDOF());
+    EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+    uint32_t basetime = timeGetTime();
+
+    RobotBase::RobotStateSaver savestate(p_robot);
+    CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
+
+    if ( !_addStart() )
+    {
+        RAVELOG_ERROR("Start configuration not added to roadmap, planning abort\n");
+        return false;
+    }
+
+    if ( !_addGoal() )
+    {
+        RAVELOG_ERROR("Goal configuration not added to roadmap, planning abort\n");
+        return false;
+    }
+
+    if ( !_findPath() )
+    {
+        RAVELOG_ERROR("No path found\n");
+        return false;
+    }
+
+    /// create Trajectory from path found
+    OpenRAVE::Trajectory::TPOINT pt;
+    pt.q.resize(p_parameters->GetDOF());
     
-    FOREACH ( itnode, _lPathNodes ) {
-        for ( int i = 0; i < _pParameters->GetDOF(); ++i ) {
+    FOREACH ( itnode, l_pathnodes ) {
+        for ( int i = 0; i < p_parameters->GetDOF(); ++i ) {
             pt.q[i] = (*itnode).nconfig[i];
-		}
+        }
         ptraj->AddPoint(pt);
     }
 
     RAVELOG_DEBUGA(str(boost::format("plan success, path=%d points in %fs\n")%ptraj->GetPoints().size()%((0.001f*(float)(timeGetTime()-basetime)))));
-	
-	return true;
+
+    return true;
 }
 
 /**
@@ -179,175 +179,175 @@ bool VISPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream>
  */
 int VISPRM::_buildRoadMap()
 {
-	// Generate samples from the CSpace
-	int i = 0;
-	while (i < _pParameters->iMnodes) 
-	{
-		if (_sampler->GenSingleSample(_vRandomConfig) ) 
-		{
-			_vvSamples.push_back(_vRandomConfig);
-		} 
-		else 
-		{
-			RAVELOG_INFO("Failed to get a sample\n");
-			continue;
-		}
-		i++;
-	}
-	
-	RAVELOG_DEBUG("connecting samples\n");
-        for (vv_config_set::iterator it = _vvSamples.begin(); it != _vvSamples.end(); it++)
-	{
-		std::list<spatial_node> neighbors;
-		spatial_vertex vs = _gRoadmap->addNode(*it);
+    // Generate samples from the CSpace
+    int i = 0;
+    while (i < p_parameters->iMnodes)
+    {
+        if (p_sampler->GenSingleSample(v_random_config) )
+        {
+            vv_samples.push_back(v_random_config);
+        }
+        else
+        {
+            RAVELOG_INFO("Failed to get a sample\n");
+            continue;
+        }
+        i++;
+    }
 
-		RAVELOG_DEBUGA("added node\n");
-		int nns = _gRoadmap->findNN(vs, neighbors);
-		if (nns == 0)
-		{
-			continue;
-		}
-		
-		for (std::list<spatial_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++) 
-		{	
-			if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it), (*itt).nconfig, OPEN) )
-			{
-				if (!_gRoadmap->addEdge(vs, (*itt).vertex ))
-				{
-					RAVELOG_WARN("Failure in adding an edge\n");
-				}
-			}
-			else
-			{
-				continue;
-			}
-		}
-	}
+    RAVELOG_DEBUG("connecting samples\n");
+    for (vv_config_set::iterator it = vv_samples.begin(); it != vv_samples.end(); it++)
+    {
+        std::list<spatial_node> neighbors;
+        spatial_vertex vs = g_roadmap->addNode(*it);
 
-	// print the roadmap topographical sketch
-	_gRoadmap->printGraph("visprm_roadmap.dot");
+        RAVELOG_DEBUGA("added node\n");
+        int nns = g_roadmap->findNN(vs, neighbors);
+        if (nns == 0)
+        {
+            continue;
+        }
 
-	return _gRoadmap->getNodes();
+        for (std::list<spatial_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++)
+        {
+            if (!ICollision::CheckCollision(p_parameters, p_robot, (*it), (*itt).nconfig, OPEN) )
+            {
+                if (!g_roadmap->addEdge(vs, (*itt).vertex ))
+                {
+                    RAVELOG_WARN("Failure in adding an edge\n");
+                }
+            }
+            else
+            {
+                continue;
+            }
+        }
+    }
+
+    // print the roadmap topographical sketch
+    g_roadmap->printGraph("visprm_roadmap.dot");
+
+    return g_roadmap->getNodes();
 }
 
 bool VISPRM::_findPath(spatial_node _start, spatial_node _goal)
 {	
-	if ( _gRoadmap->findPathAS(_start, _goal, _lPathNodes) )
-	{
-		RAVELOG_VERBOSE("Found Goal with A* \n");
-		return true;
-	}
-	else if ( _gRoadmap->findPathDK(_start, _goal, _lPathNodes) )
-	{
-		RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
-		return true;
-	}
-	
-	return false;
+    if ( g_roadmap->findPathAS(_start, _goal, l_pathnodes) )
+    {
+        RAVELOG_VERBOSE("Found Goal with A* \n");
+        return true;
+    }
+    else if ( g_roadmap->findPathDK(_start, _goal, l_pathnodes) )
+    {
+        RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
+        return true;
+    }
+
+    return false;
 }
 
 bool VISPRM::_addStart()
 {
-	if ((int)_pParameters->vinitialconfig.size() != _pRobot->GetActiveDOF())
-	{
-		RAVELOG_ERROR("Specified Start Configuration is valid\n");
-		return false;
-	}
-	
-	
-	spatial_vertex st = _gRoadmap->addNode(_pParameters->vinitialconfig);
-	std::list<spatial_node> nearsamples;
-	
-	RAVELOG_INFO("Getting near samples for start [%d]\n", st);
-	
-	int neis = _gRoadmap->findNN(st, nearsamples);
-	RAVELOG_INFO("neighbors [%d]\n", neis);
-	
-	if ( neis == 0)
-	{
-		RAVELOG_WARN("Warning! Start node too far from the roadmap\n");
-		return false;
-	}
-		
-	RAVELOG_INFO("Adding near samples\n");
-	
-	for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
-	{
-		spatial_node nn = _gRoadmap->getNode(st);
-		if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it).nconfig, nn.nconfig, OPEN) )
-		{
-			if (_gRoadmap->addEdge((*it).vertex, st))
-			{
-				RAVELOG_INFO("Added the start configuration\n");
-				_nStart = nn;
-				break;
-			}
-		}
-		else
-		{
-			continue;
-		}
-	}
+    if ((int)p_parameters->vinitialconfig.size() != p_robot->GetActiveDOF())
+    {
+        RAVELOG_ERROR("Specified Start Configuration is valid\n");
+        return false;
+    }
 
-	if ( _nStart.vertex > (2*_gRoadmap->getNodes()) )
-	{
-		RAVELOG_ERROR("Added invalid start configuration\n");
-		return false;
-	}
 
-	return true;
+    spatial_vertex st = g_roadmap->addNode(p_parameters->vinitialconfig);
+    std::list<spatial_node> nearsamples;
+
+    RAVELOG_INFO("Getting near samples for start [%d]\n", st);
+
+    int neis = g_roadmap->findNN(st, nearsamples);
+    RAVELOG_INFO("neighbors [%d]\n", neis);
+
+    if ( neis == 0)
+    {
+        RAVELOG_WARN("Warning! Start node too far from the roadmap\n");
+        return false;
+    }
+
+    RAVELOG_INFO("Adding near samples\n");
+
+    for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
+    {
+        spatial_node nn = g_roadmap->getNode(st);
+        if (!ICollision::CheckCollision(p_parameters, p_robot, (*it).nconfig, nn.nconfig, OPEN) )
+        {
+            if (g_roadmap->addEdge((*it).vertex, st))
+            {
+                RAVELOG_INFO("Added the start configuration\n");
+                n_start = nn;
+                break;
+            }
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    if ( n_start.vertex > (2*g_roadmap->getNodes()) )
+    {
+        RAVELOG_ERROR("Added invalid start configuration\n");
+        return false;
+    }
+
+    return true;
 }
 
 bool VISPRM::_addGoal()
 {
-	if ((int)_pParameters->vgoalconfig.size() != _pRobot->GetActiveDOF())
-	{
-		RAVELOG_ERROR("Specified Goal Configuration is valid\n");
-		return false;
-	}
-	
-	
-	spatial_vertex st = _gRoadmap->addNode(_pParameters->vgoalconfig);
-	std::list<spatial_node> nearsamples;
-	
-	RAVELOG_INFO("Getting near samples for goal [%d]\n", st);
-	
-	int neis = _gRoadmap->findNN(st, nearsamples);
-	RAVELOG_INFO("neighbors [%d]\n", neis);
-	
-	if ( neis == 0)
-	{
-		RAVELOG_WARN("Warning! Goal node too far from the roadmap\n");
-		return false;
-	}
-		
-	RAVELOG_INFO("Adding near samples\n");
-	
-	for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
-	{
-		spatial_node nn = _gRoadmap->getNode(st);
-		if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it).nconfig, nn.nconfig, OPEN) )
-		{
-			if (_gRoadmap->addEdge((*it).vertex, st))
-			{
-				RAVELOG_INFO("Added the Goal configuration\n");
-				_nGoal = nn;
-				break;
-			}
-		}
-		else
-		{
-			continue;
-		}
-	}
+    if ((int)p_parameters->vgoalconfig.size() != p_robot->GetActiveDOF())
+    {
+        RAVELOG_ERROR("Specified Goal Configuration is valid\n");
+        return false;
+    }
 
-	if ( _nGoal.vertex > (2*_gRoadmap->getNodes()) )
-	{
-		RAVELOG_ERROR("Added invalid goal configuration\n");
-		return false;
-	}
-	
-	return true;
+
+    spatial_vertex st = g_roadmap->addNode(p_parameters->vgoalconfig);
+    std::list<spatial_node> nearsamples;
+
+    RAVELOG_INFO("Getting near samples for goal [%d]\n", st);
+
+    int neis = g_roadmap->findNN(st, nearsamples);
+    RAVELOG_INFO("neighbors [%d]\n", neis);
+
+    if ( neis == 0)
+    {
+        RAVELOG_WARN("Warning! Goal node too far from the roadmap\n");
+        return false;
+    }
+
+    RAVELOG_INFO("Adding near samples\n");
+
+    for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
+    {
+        spatial_node nn = g_roadmap->getNode(st);
+        if (!ICollision::CheckCollision(p_parameters, p_robot, (*it).nconfig, nn.nconfig, OPEN) )
+        {
+            if (g_roadmap->addEdge((*it).vertex, st))
+            {
+                RAVELOG_INFO("Added the Goal configuration\n");
+                n_goal = nn;
+                break;
+            }
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    if ( n_goal.vertex > (2*g_roadmap->getNodes()) )
+    {
+        RAVELOG_ERROR("Added invalid goal configuration\n");
+        return false;
+    }
+
+    return true;
 }
 
 }

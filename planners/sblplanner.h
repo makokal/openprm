@@ -34,33 +34,33 @@
 
 namespace openprm
 {
-	
+
 class SBLPlanner : public PlannerBase
 {
 public:
     SBLPlanner ( EnvironmentBasePtr penv );
     virtual ~SBLPlanner();
-	
-	bool InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr pparams);
-	bool PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream);
-	virtual PlannerParametersConstPtr GetParameters() const;
-	virtual RobotBasePtr GetRobot() const; 
-	
+
+    bool InitPlan(RobotBasePtr pbase, PlannerParametersConstPtr pparams);
+    bool PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream);
+    virtual PlannerParametersConstPtr GetParameters() const;
+    virtual RobotBasePtr GetRobot() const;
+
 protected:
-	RobotBasePtr _pRobot;
-	boost::shared_ptr<PRMParams> _pParameters;
-	boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > _tTreeS;	//! tree from start config
-	boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > _tTreeG;	//! tree from goal config
-	boost::shared_ptr<RandomSampler> _sampler;
-	std::list<spatial_node> _lPathNodes;
-        v_config _vRandomConfig;
+    RobotBasePtr p_robot;
+    boost::shared_ptr<PRMParams> p_parameters;
+    boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > t_start;	//! tree from start config
+    boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > t_goal;	//! tree from goal config
+    boost::shared_ptr<RandomSampler> p_sampler;
+    std::list<spatial_node> l_pathnodes;
+    v_config v_random_config;
 };
 
 SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
 {
-	__description = "SBL Planner (Billy Okal and S. Srinivasa)";
-	_vRandomConfig.clear();
-	_lPathNodes.clear();
+    //__description = "SBL Planner (Billy Okal and S. Srinivasa)";
+    v_random_config.clear();
+    l_pathnodes.clear();
 }
 
 
@@ -68,67 +68,67 @@ SBLPlanner::~SBLPlanner() {}
 
 PlannerBase::PlannerParametersConstPtr SBLPlanner::GetParameters() const
 {
-    return _pParameters;
+    return p_parameters;
 }
 
 RobotBasePtr SBLPlanner::GetRobot() const
 {
-    return _pRobot;
+    return p_robot;
 }
 
 bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersConstPtr pparams)
 {
-	RAVELOG_INFO("Initializing Planner\n");
+    RAVELOG_INFO("Initializing Planner\n");
 
-	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
-	_pParameters.reset<PRMParams>(new PRMParams());
-	_pParameters->copy(pparams);
-	
+    EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+    p_parameters.reset<PRMParams>(new PRMParams());
+    p_parameters->copy(pparams);
+
     // set up robot and the tsrchains
-    _pRobot = pbase;
-	
-	_vRandomConfig.resize(_pRobot->GetActiveDOF());
-	
-	_sampler.reset<RandomSampler>(new RandomSampler(_pRobot));
-// 	_sampler = new RandomSampler(_pRobot);
-	
-	_tTreeG.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
-	_tTreeS.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
-	
-	RAVELOG_INFO("SBLPlanner Initialized\n");
-	return true;
+    p_robot = pbase;
+
+    v_random_config.resize(p_robot->GetActiveDOF());
+
+    p_sampler.reset<RandomSampler>(new RandomSampler(p_robot));
+    // 	_sampler = new RandomSampler(_pRobot);
+
+    t_goal.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
+    t_start.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
+
+    RAVELOG_INFO("SBLPlanner Initialized\n");
+    return true;
 }
 
 bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > pOutStream)
 {
-	if (!_pParameters) 
-	{
-		RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
-		return false;
-	}
+    if (!p_parameters)
+    {
+        RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
+        return false;
+    }
 
-	EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
-	uint32_t basetime = timeGetTime();
-	
-	RobotBase::RobotStateSaver savestate(_pRobot);
-	CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
-	
-	//! build tree and get a path
-	
-	/// create Trajectory from path found
-	OpenRAVE::Trajectory::TPOINT pt;
-    pt.q.resize(_pParameters->GetDOF());
+    EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+    uint32_t basetime = timeGetTime();
+
+    RobotBase::RobotStateSaver savestate(p_robot);
+    CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
+
+    //! build tree and get a path
+
+    /// create Trajectory from path found
+    OpenRAVE::Trajectory::TPOINT pt;
+    pt.q.resize(p_parameters->GetDOF());
     
-    FOREACH ( itnode, _lPathNodes ) {
-        for ( int i = 0; i < _pParameters->GetDOF(); ++i ) {
+    FOREACH ( itnode, l_pathnodes ) {
+        for ( int i = 0; i < p_parameters->GetDOF(); ++i ) {
             pt.q[i] = (*itnode).nconfig[i];
-		}
+        }
         ptraj->AddPoint(pt);
     }
 
     RAVELOG_DEBUGA(str(boost::format("plan success, path=%d points in %fs\n")%ptraj->GetPoints().size()%((0.001f*(float)(timeGetTime()-basetime)))));
-	
-	return true;
+
+    return true;
 }
 
 

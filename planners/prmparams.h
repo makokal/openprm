@@ -49,11 +49,11 @@ public:
     unsigned int i_ntries;
     unsigned int i_nnodes;
     unsigned int i_nedges;
-	dReal f_neigh_thresh;
+    dReal f_neigh_thresh;
 
 protected:
 
-    bool bProcessing;
+    bool b_processing;
     virtual bool serialize ( std::ostream& O ) const;
     BaseXMLReader::ProcessElement startElement ( const std::string& name, const std::list<std::pair<std::string,std::string> >& atts );
     virtual bool endElement ( const std::string& name );
@@ -63,21 +63,21 @@ protected:
 /** ======================================================================================= */
 
 PRMParams::PRMParams () :
-        b_prune_roadmap ( false ),
-        b_smooth_path ( false ),
-        i_ntries ( 10 ),
-        i_nnodes ( 100 ),
-        i_nedges ( 10 ),
-        bProcessing ( false ),
-        f_neigh_thresh ( 4.5 )
+    b_prune_roadmap ( false ),
+    b_smooth_path ( false ),
+    i_ntries ( 10 ),
+    i_nnodes ( 100 ),
+    i_nedges ( 10 ),
+    b_processing ( false ),
+    f_neigh_thresh ( 4.5 )
 {
 
     _vXMLParameters.push_back ( "bpruneroadmap" );
     _vXMLParameters.push_back ( "bsmoothpath" );
     _vXMLParameters.push_back ( "ntries" );
-	_vXMLParameters.push_back ( "mnodes" );
-	_vXMLParameters.push_back ( "medges" );
-	_vXMLParameters.push_back ( "neighthresh" );
+    _vXMLParameters.push_back ( "mnodes" );
+    _vXMLParameters.push_back ( "medges" );
+    _vXMLParameters.push_back ( "neighthresh" );
 }
 
 
@@ -96,13 +96,13 @@ bool PRMParams::serialize ( std::ostream& O ) const
     O << "<smoothpath>" << b_smooth_path << "</smoothpath>" << endl;
 
     O << "<ntries>" << i_ntries << "</ntries>" << endl;
-	
-	O << "<mnodes>" << i_nnodes << "</mnodes>" << endl;
 
-	O << "<medges>" << i_nedges << "</medges>" << endl;
+    O << "<mnodes>" << i_nnodes << "</mnodes>" << endl;
 
-	O << "<neighthresh>" << f_neigh_thresh << "</neighthresh>" << endl;
-	
+    O << "<medges>" << i_nedges << "</medges>" << endl;
+
+    O << "<neighthresh>" << f_neigh_thresh << "</neighthresh>" << endl;
+
     return !!O;
 }
 
@@ -111,7 +111,7 @@ bool PRMParams::serialize ( std::ostream& O ) const
 
 BaseXMLReader::ProcessElement PRMParams::startElement ( const std::string& name, const std::list< pair< string, string > >& atts )
 {
-    if ( bProcessing )
+    if ( b_processing )
     {
         return PE_Ignore;
     }
@@ -126,14 +126,14 @@ BaseXMLReader::ProcessElement PRMParams::startElement ( const std::string& name,
         return PE_Ignore;
     }
 
-    bProcessing = ( name == "bpruneroadmap" || 
-					name == "bsmoothpath" || 
-					name == "ntries" ||
-					name == "mnodes" ||
-					name == "medges" ||
-					name == "neighthresh" );
+    b_processing = ( name == "bpruneroadmap" ||
+                   name == "bsmoothpath" ||
+                   name == "ntries" ||
+                   name == "mnodes" ||
+                   name == "medges" ||
+                   name == "neighthresh" );
 
-    return bProcessing ? PE_Support : PE_Pass;
+    return b_processing ? PE_Support : PE_Pass;
 }
 
 
@@ -142,7 +142,7 @@ BaseXMLReader::ProcessElement PRMParams::startElement ( const std::string& name,
 bool PRMParams::endElement ( const std::string& name )
 {
 
-    if ( bProcessing )
+    if ( b_processing )
     {
         if ( name == "pruneroadmap" )
         {
@@ -157,23 +157,23 @@ bool PRMParams::endElement ( const std::string& name )
             _ss >> i_ntries;
         }
         else if ( name == "mnodes" )
-		{
-			_ss >> i_nnodes;
-		}
-		else if ( name == "medges" )
-		{
-			_ss >> i_nedges;
-		}
-		else if ( name == "neighthresh" )
-		{
-			_ss >> f_neigh_thresh;
-		}
+        {
+            _ss >> i_nnodes;
+        }
+        else if ( name == "medges" )
+        {
+            _ss >> i_nedges;
+        }
+        else if ( name == "neighthresh" )
+        {
+            _ss >> f_neigh_thresh;
+        }
         else
         {
             RAVELOG_WARN ( str ( boost::format ( "unknown tag %s\n" ) %name ) );
         }
 
-        bProcessing = false;
+        b_processing = false;
         return false;
     }
 

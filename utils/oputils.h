@@ -153,7 +153,7 @@ public:
         }
         dReal fisteps = dReal ( 1.0f ) /numSteps;
         FOREACH ( it,dQ )
-        *it *= fisteps;
+                *it *= fisteps;
 
         if ( !!params->_constraintfn )
             vlastconfig = pQ0;
