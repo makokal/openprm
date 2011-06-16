@@ -52,10 +52,10 @@ protected:
 	boost::shared_ptr<SpatialGraph> _gRoadmap;
 	boost::shared_ptr<RandomSampler> _sampler;
 // 	RandomSampler* _sampler;
-	std::list<s_node> _lPathNodes;
-	config _vRandomConfig;
-	configSet _vvSamples;
-	s_node _nStart, _nGoal;
+	std::list<spatial_node> _lPathNodes;
+        v_config _vRandomConfig;
+        vv_config_set _vvSamples;
+	spatial_node _nStart, _nGoal;
 	
 	int _buildRoadMap();
 	bool _findPath();
@@ -196,10 +196,10 @@ int VISPRM::_buildRoadMap()
 	}
 	
 	RAVELOG_DEBUG("connecting samples\n");
-	for (configSet::iterator it = _vvSamples.begin(); it != _vvSamples.end(); it++) 
+        for (vv_config_set::iterator it = _vvSamples.begin(); it != _vvSamples.end(); it++)
 	{
-		std::list<s_node> neighbors;
-		s_vertex vs = _gRoadmap->addNode(*it);
+		std::list<spatial_node> neighbors;
+		spatial_vertex vs = _gRoadmap->addNode(*it);
 
 		RAVELOG_DEBUGA("added node\n");
 		int nns = _gRoadmap->findNN(vs, neighbors);
@@ -208,7 +208,7 @@ int VISPRM::_buildRoadMap()
 			continue;
 		}
 		
-		for (std::list<s_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++) 
+		for (std::list<spatial_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++) 
 		{	
 			if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it), (*itt).nconfig, OPEN) )
 			{
@@ -230,7 +230,7 @@ int VISPRM::_buildRoadMap()
 	return _gRoadmap->getNodes();
 }
 
-bool VISPRM::_findPath(s_node _start, s_node _goal)
+bool VISPRM::_findPath(spatial_node _start, spatial_node _goal)
 {	
 	if ( _gRoadmap->findPathAS(_start, _goal, _lPathNodes) )
 	{
@@ -255,8 +255,8 @@ bool VISPRM::_addStart()
 	}
 	
 	
-	s_vertex st = _gRoadmap->addNode(_pParameters->vinitialconfig);
-	std::list<s_node> nearsamples;
+	spatial_vertex st = _gRoadmap->addNode(_pParameters->vinitialconfig);
+	std::list<spatial_node> nearsamples;
 	
 	RAVELOG_INFO("Getting near samples for start [%d]\n", st);
 	
@@ -271,9 +271,9 @@ bool VISPRM::_addStart()
 		
 	RAVELOG_INFO("Adding near samples\n");
 	
-	for (std::list<s_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
+	for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
 	{
-		s_node nn = _gRoadmap->getNode(st);
+		spatial_node nn = _gRoadmap->getNode(st);
 		if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it).nconfig, nn.nconfig, OPEN) )
 		{
 			if (_gRoadmap->addEdge((*it).vertex, st))
@@ -307,8 +307,8 @@ bool VISPRM::_addGoal()
 	}
 	
 	
-	s_vertex st = _gRoadmap->addNode(_pParameters->vgoalconfig);
-	std::list<s_node> nearsamples;
+	spatial_vertex st = _gRoadmap->addNode(_pParameters->vgoalconfig);
+	std::list<spatial_node> nearsamples;
 	
 	RAVELOG_INFO("Getting near samples for goal [%d]\n", st);
 	
@@ -323,9 +323,9 @@ bool VISPRM::_addGoal()
 		
 	RAVELOG_INFO("Adding near samples\n");
 	
-	for (std::list<s_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
+	for (std::list<spatial_node>::iterator it = nearsamples.begin(); it != nearsamples.end(); it++)
 	{
-		s_node nn = _gRoadmap->getNode(st);
+		spatial_node nn = _gRoadmap->getNode(st);
 		if (!ICollision::CheckCollision(_pParameters, _pRobot, (*it).nconfig, nn.nconfig, OPEN) )
 		{
 			if (_gRoadmap->addEdge((*it).vertex, st))

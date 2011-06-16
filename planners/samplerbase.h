@@ -62,21 +62,21 @@ public:
     }
 
 
-    virtual bool GenSingleSample ( config& sq )
+    virtual bool GenSingleSample ( v_config& sq )
     {
         sq.resize ( idimension );
 
         return true;
     }
 
-	//TODO - more required
-    virtual bool GenMultiSamples ( configSet& sqs )
+    //TODO - more required
+    virtual bool GenMultiSamples ( vv_config_set& sqs )
     {
         return true;
     }
 
 protected:
-	
+
     RobotBasePtr robot;
     int idimension;
 };
@@ -99,7 +99,7 @@ public:
 
     virtual ~RandomSampler() {}
 
-    bool GenSingleSample ( config& vs )
+    bool GenSingleSample ( v_config& vs )
     {
         vs.resize ( lower.size() );
         for ( size_t i = 0; i < lower.size(); i++ )
@@ -109,7 +109,7 @@ public:
         return true;
     }
 
-    bool GenMultiSamples ( configSet& vvs )
+    bool GenMultiSamples ( vv_config_set& vvs )
     {
         FOREACH ( it, vvs )
         {
@@ -118,7 +118,7 @@ public:
         return true;
     }
 
-    bool GenNeighSample ( config& vns, const config vcs, dReal fRadius )
+    bool GenNeighSample ( v_config& vns, const v_config vcs, dReal fRadius )
     {
         RAVELOG_INFO ( "Not implemnted yet\n" );
         return true;
@@ -133,10 +133,10 @@ class HaltonSampler : public SamplerBase
 {
 public:
     HaltonSampler ( RobotBasePtr probot ) : SamplerBase(probot)
-	{
-		
-	}
-	
+    {
+        RAVELOG_VERBOSEA("Not implemented yet");
+    }
+
     virtual ~HaltonSampler();
 };
 
@@ -145,10 +145,10 @@ class GaussianSampler : public SamplerBase
 {
 public:
     GaussianSampler ( RobotBasePtr probot ) : SamplerBase(probot)
-	{
-		
-	}
-	
+    {
+        RAVELOG_VERBOSEA("Not implemented yet");
+    }
+
     virtual ~GaussianSampler();
 };
 

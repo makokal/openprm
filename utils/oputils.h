@@ -42,7 +42,7 @@ namespace openprm
 {
 
 typedef std::vector<dReal> v_config;
-typedef std::vector<std::vector<dReal> > vv_config_set;
+typedef std::vector<v_config > vv_config_set;
 
 enum IntervalType
 {

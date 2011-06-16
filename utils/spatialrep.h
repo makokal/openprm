@@ -50,20 +50,20 @@
 namespace openprm
 {
 
-typedef dReal s_cost;
+typedef dReal graph_cost;
 typedef boost::adjacency_list<
 			boost::listS,
 			boost::vecS,
 			boost::undirectedS,
 			boost::no_property,
-			boost::property<boost::edge_weight_t, s_cost> >
-		s_graph;
-typedef s_graph::vertex_descriptor s_vertex;
-typedef  std::pair<s_vertex, s_vertex> s_edge;
-typedef boost::property_map<s_graph, boost::edge_weight_t>::type weight_map;
-typedef s_graph::edge_descriptor e_descriptor;
-typedef boost::graph_traits<s_graph>::out_edge_iterator out_edge_iterator;
-typedef boost::adjacency_iterator_generator<s_graph, s_vertex, out_edge_iterator>::type adjacency_iterator;
+                        boost::property<boost::edge_weight_t, graph_cost> >
+                spatial_graph;
+typedef spatial_graph::vertex_descriptor spatial_vertex;
+typedef  std::pair<spatial_vertex, spatial_vertex> spatial_edge;
+typedef boost::property_map<spatial_graph, boost::edge_weight_t>::type weight_map;
+typedef spatial_graph::edge_descriptor e_descriptor;
+typedef boost::graph_traits<spatial_graph>::out_edge_iterator out_edge_iterator;
+typedef boost::adjacency_iterator_generator<spatial_graph, spatial_vertex, out_edge_iterator>::type adjacency_iterator;
 
 //! for spatial tree used in SBL planner
 enum ExtendType 
@@ -76,21 +76,23 @@ enum ExtendType
 struct found_goal {};
 
 //! Spatial Graph Node 
-struct s_node
+struct spatial_node
 {
-	s_node() {}
-	s_node ( const config& conf, s_vertex v ) : nconfig ( conf ), vertex ( v ) {}
-	config nconfig;
-	s_vertex vertex;
+        spatial_node() {}
+        spatial_node ( const v_config& conf, spatial_vertex v ) : nconfig ( conf ), vertex ( v ) {}
+        v_config nconfig;
+        spatial_vertex vertex;
 };
 
 //! Spatial Tree Node
-struct t_node
+struct tree_node
 {
-	t_node(int parent, const vector<dReal>& q) : parent(parent), q(q) {}
+        tree_node(int parent, const vector<dReal>& q) : parent(parent), q(q) {}
 	int parent;
-	config q; 
+        v_config q;
 };
+
+/** ======================================================================================= */
 
 /* A Star Goal visitor*/
 template <class Vertex>
@@ -114,6 +116,8 @@ public:
 private:
     Vertex m_goal;
 };
+
+/** ======================================================================================= */
 
 /* A Star Heuritic */
 template <class Graph, class CostType, class NodeMap>
@@ -139,6 +143,8 @@ private:
 };
 
 
+/** ======================================================================================= */
+
 /**
  * \class SpatialGraph
  * Spatial Representation mechanism mainly geared at Sample based planners
@@ -153,7 +159,7 @@ public:
         max_nodes = DMAXNODES;
         neigh_thresh = DNTHRESH;
         node_list.clear();
-        s_graph g;
+        spatial_graph g;
         p_graph = g;
         w_map = boost::get ( boost::edge_weight, p_graph );
     }
@@ -163,7 +169,7 @@ public:
         max_nodes = m_nodes;
         neigh_thresh = n_thresh;
         node_list.clear();
-        s_graph g ( max_nodes );
+        spatial_graph g ( max_nodes );
         p_graph = g;
         w_map = boost::get ( boost::edge_weight, p_graph );
     }
@@ -171,17 +177,17 @@ public:
     virtual ~SpatialGraph() {}
 
 
-    s_vertex addNode ( const std::vector<dReal>& conf )
+    spatial_vertex addNode ( const std::vector<dReal>& conf )
     {
-        const s_vertex v = boost::add_vertex ( p_graph );
+        const spatial_vertex v = boost::add_vertex ( p_graph );
 
-        s_node nn ( conf,v );
+        spatial_node nn ( conf,v );
         node_list.push_back ( nn );
 
         return v;
     }
 
-    bool addEdge ( s_vertex u, s_vertex v )
+    bool addEdge ( spatial_vertex u, spatial_vertex v )
     {
         //TODO - control the no of edges allowed per node to ensure good coverage
 
@@ -192,8 +198,8 @@ public:
             return false;
         }
 
-        s_node nu = getNode ( u );
-        s_node nv = getNode ( v );
+        spatial_node nu = getNode ( u );
+        spatial_node nv = getNode ( v );
 
         dReal dist = DistMetric::Eval ( nu.nconfig, nv.nconfig );
 		if (dist > neigh_thresh)
@@ -201,7 +207,7 @@ public:
 			return false;
 		}
 
-        s_graph::edge_descriptor ed;
+        spatial_graph::edge_descriptor ed;
         bool inserted;
 
         boost::tie ( ed, inserted ) = boost::add_edge ( u, v, p_graph );
@@ -215,16 +221,16 @@ public:
         return true;
     }
 
-    bool findPathDK ( s_node f, s_node t, std::list<s_node>& s_path )
+    bool findPathDK ( spatial_node f, spatial_node t, std::list<spatial_node>& s_path )
     {
-        std::vector<s_vertex> p ( boost::num_vertices ( p_graph ) );
+        std::vector<spatial_vertex> p ( boost::num_vertices ( p_graph ) );
         std::vector<int> d ( boost::num_vertices ( p_graph ) );
 
-        s_vertex start = f.vertex;
+        spatial_vertex start = f.vertex;
 
         boost::dijkstra_shortest_paths ( p_graph, start, boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ) );
 
-        s_vertex child = t.vertex;
+        spatial_vertex child = t.vertex;
 
         do
         {
@@ -244,13 +250,13 @@ public:
         return true;
     }
 
-    bool findPathAS ( s_node f, s_node t, std::list<s_node>& s_path )
+    bool findPathAS ( spatial_node f, spatial_node t, std::list<spatial_node>& s_path )
     {
-        s_vertex start = f.vertex;
-        s_vertex goal = t.vertex;
+        spatial_vertex start = f.vertex;
+        spatial_vertex goal = t.vertex;
 
         // node map
-        s_node node_map[node_list.size() ];
+        spatial_node node_map[node_list.size() ];
 
         int i = 0;
         FOREACH ( node, node_list )
@@ -259,7 +265,7 @@ public:
             i++;
         }
 
-        std::vector<s_vertex> p ( boost::num_vertices ( p_graph ) );
+        std::vector<spatial_vertex> p ( boost::num_vertices ( p_graph ) );
         std::vector<int> d ( boost::num_vertices ( p_graph ) );
 
 
@@ -269,13 +275,13 @@ public:
             boost::astar_search (
                 p_graph,
                 start,
-                distance_heuristic<s_graph, s_cost, s_node*> ( node_map, goal ),
-                boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<s_vertex> ( goal ) )
+                distance_heuristic<spatial_graph, graph_cost, spatial_node*> ( node_map, goal ),
+                boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<spatial_vertex> ( goal ) )
             );
         }
         catch ( found_goal fg )
         {
-            for ( s_vertex v = goal;; v = p[v] )
+            for ( spatial_vertex v = goal;; v = p[v] )
             {
                 s_path.push_front ( getNode ( v ) );
                 if ( p[v] == v )
@@ -292,7 +298,7 @@ public:
      * \def findNN
      * \brief Find the nearest neighbors of a node based on the neighborhood threshold
      */
-    int findNN ( s_vertex n, std::list<s_node>& s_neighbors )
+    int findNN ( spatial_vertex n, std::list<spatial_node>& s_neighbors )
     {
         if ( node_list.size() <=1 )
         {
@@ -305,9 +311,9 @@ public:
             return 0;
         }
 
-        s_node nn = getNode ( n );
+        spatial_node nn = getNode ( n );
         s_neighbors.clear();
-        for ( std::vector<s_node>::iterator it = node_list.begin(); it != node_list.end(); it++ )
+        for ( std::vector<spatial_node>::iterator it = node_list.begin(); it != node_list.end(); it++ )
         {
             //avoid vertices already connected with
             if ( edgeExists ( n, ( *it ).vertex ) )
@@ -343,10 +349,10 @@ public:
     }
 
 
-    inline s_node getNode ( s_vertex v )
+    inline spatial_node getNode ( spatial_vertex v )
     {
-        s_node n;
-        for ( std::vector<s_node>::iterator it = node_list.begin(); it != node_list.end(); it++ )
+        spatial_node n;
+        for ( std::vector<spatial_node>::iterator it = node_list.begin(); it != node_list.end(); it++ )
         {
             if ( ( *it ).vertex == v )
             {
@@ -356,7 +362,7 @@ public:
         return n;
     }
 
-    inline bool edgeExists ( s_vertex u, s_vertex v )
+    inline bool edgeExists ( spatial_vertex u, spatial_vertex v )
     {
         if ( u == v )
         {
@@ -381,10 +387,13 @@ protected:
 
     unsigned int max_nodes;
     dReal neigh_thresh;
-    std::vector<s_node> node_list;
-    s_graph p_graph;
+    std::vector<spatial_node> node_list;
+    spatial_graph p_graph;
     weight_map w_map;
 };
+
+
+/** ======================================================================================= */
 
 
 template <typename Planner, typename Node>

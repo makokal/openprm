@@ -49,11 +49,11 @@ public:
 protected:
 	RobotBasePtr _pRobot;
 	boost::shared_ptr<PRMParams> _pParameters;
-	boost::shared_ptr<SpatialTree<SBLPlanner, t_node> > _tTreeS;	//! tree from start config
-	boost::shared_ptr<SpatialTree<SBLPlanner, t_node> > _tTreeG;	//! tree from goal config
+	boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > _tTreeS;	//! tree from start config
+	boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > _tTreeG;	//! tree from goal config
 	boost::shared_ptr<RandomSampler> _sampler;
-	std::list<s_node> _lPathNodes;
-	config _vRandomConfig;
+	std::list<spatial_node> _lPathNodes;
+        v_config _vRandomConfig;
 };
 
 SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
@@ -92,8 +92,8 @@ bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersCons
 	_sampler.reset<RandomSampler>(new RandomSampler(_pRobot));
 // 	_sampler = new RandomSampler(_pRobot);
 	
-	_tTreeG.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
-	_tTreeS.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, t_node>);
+	_tTreeG.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
+	_tTreeS.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
 	
 	RAVELOG_INFO("SBLPlanner Initialized\n");
 	return true;
