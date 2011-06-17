@@ -127,8 +127,6 @@ bool ClassicPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparam
     //! \todo add use of i_nedges
     g_roadmap.reset(new SpatialGraph(p_parameters->i_nnodes, p_parameters->f_neigh_thresh));
 
-//    SpatialGraph g(p_parameters->iMnodes, p_parameters->fNeighthresh);
-//    g_roadmap = &g;
 
     RAVELOG_INFO("ClassicPRM::building roadmap\n");
     int nodes = buildRoadMap();
@@ -194,7 +192,7 @@ int ClassicPRM::buildRoadMap()
 {
     // Generate samples from the CSpace
     int i = 0;
-    while (i < p_parameters->i_nnodes)
+    while (i < (int)p_parameters->i_nnodes)
     {
         if (p_sampler->GenSingleSample(v_random_config) )
         {
@@ -251,14 +249,15 @@ int ClassicPRM::buildRoadMap()
 
 /** ======================================================================================= */
 
-bool ClassicPRM::findPath(spatial_node _start, spatial_node _goal)
+//bool ClassicPRM::findPath(spatial_node _start, spatial_node _goal)
+bool ClassicPRM::findPath ()
 {	
-    if ( g_roadmap->findPathAS(_start, _goal, l_pathnodes) )
+    if ( g_roadmap->findPathAS(n_start, n_goal, l_pathnodes) )
     {
         RAVELOG_VERBOSE("Found Goal with A* \n");
         return true;
     }
-    else if ( g_roadmap->findPathDK(_start, _goal, l_pathnodes) )
+    else if ( g_roadmap->findPathDK(n_start, n_goal, l_pathnodes) )
     {
         RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
         return true;

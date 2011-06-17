@@ -68,8 +68,8 @@ PRMParams::PRMParams () :
     i_ntries ( 10 ),
     i_nnodes ( 100 ),
     i_nedges ( 10 ),
-    b_processing ( false ),
-    f_neigh_thresh ( 4.5 )
+    f_neigh_thresh ( 4.5 ),
+    b_processing ( false )
 {
 
     _vXMLParameters.push_back ( "bpruneroadmap" );
