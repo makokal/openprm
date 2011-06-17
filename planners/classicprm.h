@@ -56,7 +56,6 @@ protected:
 
     RobotBasePtr p_robot;
     boost::shared_ptr<PRMParams> p_parameters;
-//    SpatialGraph* g_roadmap;
     boost::shared_ptr<SpatialGraph> g_roadmap;
     boost::shared_ptr<RandomSampler> p_sampler;
     std::list<spatial_node> l_pathnodes;

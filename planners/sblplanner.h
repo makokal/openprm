@@ -54,6 +54,49 @@ protected:
     boost::shared_ptr<RandomSampler> p_sampler;
     std::list<spatial_node> l_pathnodes;
     v_config v_random_config;
+    bool b_connected;
+
+
+    inline void buildTrees(int start_id, int goal_id)
+    {
+        int i_start_index, i_goal_index;
+
+        while(!b_connected)
+        {
+            if (!(p_sampler->GenSingleSample(v_random_config)) )
+            {
+                RAVELOG_WARN("Error in sampling");
+            }
+            else
+            {
+                ExtendType ets, etg;
+
+                t_start->Extend (t_start->GetConfig (start_id), i_start_index);
+                ets = t_start->Extend (v_random_config, i_start_index);
+
+                if (ets == ET_Failed)
+                {
+                    continue;
+                }
+                else
+                {
+                    t_goal->Extend (t_goal->GetConfig (goal_id), i_goal_index);
+                    etg = t_goal->Extend (t_start->GetConfig (i_start_index), i_goal_index);
+
+                    // check if the trees are conected already
+                    if (etg == ET_Connected)
+                    {
+                        b_connected = true;
+                        RAVELOG_INFO("Trees connected");
+//                        break;
+                    }
+                }
+            }
+
+            // swap the trees
+            swap(t_start, t_goal);
+        }
+    }
 };
 
 
@@ -63,6 +106,7 @@ SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
 {
     v_random_config.clear();
     l_pathnodes.clear();
+    b_connected = false;
 }
 
 SBLPlanner::~SBLPlanner() {}
@@ -121,9 +165,13 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
 
     //! \todo build tree and get a path
+    int s_id = t_start->AddNode (0, p_parameters->vinitialconfig);
+    int g_id = t_goal->AddNode (1000, p_parameters->vgoalconfig);
 
+    // build the trees
+    buildTrees (s_id, g_id);
 
-
+    // search for path in the connected tree
 
 
     // create Trajectory from path found
