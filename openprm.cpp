@@ -34,6 +34,7 @@
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
 #include "planners/classicprm.h"
+#include "planners/sblplanner.h"
 #include "planners/prmplanning.h"
 
 using namespace OpenRAVE;
@@ -51,9 +52,9 @@ InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string&
     else if( type == OpenRAVE::PT_Planner && interfacename == "classicprm" )
     {
         return InterfaceBasePtr(new ClassicPRM(penv));
-    } /*else if ( type == PT_Planner && interfacename == "sblplanner" ) {
-                return InterfaceBasePtr(new SBLPlanner(penv));
-        } else if ( type == PT_Planner && interfacename == "vprmplanner" ) {
+    } else if ( type == PT_Planner && interfacename == "sblplanner" ) {
+        return InterfaceBasePtr(new SBLPlanner(penv));
+    } /*else if ( type == PT_Planner && interfacename == "vprmplanner" ) {
                 return InterfaceBasePtr(new VPRMPlanner(penv));
         } else if ( type == PT_Planner && interfacename == "goalsetprm" ) {
                 return InterfaceBasePtr(new GoalSetPRM(penv));
@@ -67,7 +68,7 @@ void GetPluginAttributesValidated(PLUGININFO& info)
     // planners
     info.interfacenames[PT_Planner].push_back("ClassicPRM");
     //     info.interfacenames[PT_Planner].push_back("VPRMPlanner");
-    // 	info.interfacenames[PT_Planner].push_back("SBLPlanner");
+    info.interfacenames[PT_Planner].push_back("SBLPlanner");
     // 	info.interfacenames[PT_Planner].push_back("GoalSetPRM");
     //
     /// problems

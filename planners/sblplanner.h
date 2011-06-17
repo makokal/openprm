@@ -52,14 +52,13 @@ protected:
     boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > t_start;	//! tree from start config
     boost::shared_ptr<SpatialTree<SBLPlanner, tree_node> > t_goal;	//! tree from goal config
     boost::shared_ptr<RandomSampler> p_sampler;
-    std::list<spatial_node> l_pathnodes;
     v_config v_random_config;
     bool b_connected;
+    int i_start_index, i_goal_index;
 
 
     inline void buildTrees(int start_id, int goal_id)
     {
-        int i_start_index, i_goal_index;
 
         while(!b_connected)
         {
@@ -105,7 +104,6 @@ protected:
 SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
 {
     v_random_config.clear();
-    l_pathnodes.clear();
     b_connected = false;
 }
 
@@ -140,8 +138,8 @@ bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersCons
     p_sampler.reset<RandomSampler>(new RandomSampler(p_robot));
     // 	_sampler = new RandomSampler(_pRobot);
 
-    t_goal.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
-    t_start.reset<SpatialTree<SBLPlanner, t_node> >(new SpatialTree<SBLPlanner, tree_node>);
+    t_goal.reset<SpatialTree<SBLPlanner, tree_node> >(new SpatialTree<SBLPlanner, tree_node>);
+    t_start.reset<SpatialTree<SBLPlanner, tree_node> >(new SpatialTree<SBLPlanner, tree_node>);
 
     RAVELOG_INFO("SBLPlanner Initialized\n");
     return true;
@@ -164,23 +162,62 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     RobotBase::RobotStateSaver savestate(p_robot);
     CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
 
-    //! \todo build tree and get a path
+    //! build tree and get a path
     int s_id = t_start->AddNode (0, p_parameters->vinitialconfig);
-    int g_id = t_goal->AddNode (1000, p_parameters->vgoalconfig);
+    int g_id = t_goal->AddNode (-1, p_parameters->vgoalconfig);
 
     // build the trees
     buildTrees (s_id, g_id);
 
-    // search for path in the connected tree
+    if ( !b_connected )
+    {
+        RAVELOG_DEBUGA("plan failed(cound not connect trees), %fs\n",0.001f*(float)(timeGetTime()-basetime));
+        return false;
+    }
+
+    // ---------------------------------------------
+    //! \todo search for path in the connected tree
+    std::list<tree_node*> l_pathnodes;
+
+    // add nodes in the path, from start to connect point
+    tree_node* st_node = t_start->_nodes.at (i_start_index);
+    while (1)
+    {
+        l_pathnodes.push_front (st_node);
+        if (st_node->parent < 0)
+        {
+            break;
+        }
+        else
+        {
+            st_node = t_start->_nodes.at (st_node->parent);
+        }
+    }
+
+    // add nodes in the path, from goal to connect point
+    tree_node* gt_node = t_goal->_nodes.at (i_goal_index);
+    while (1)
+    {
+        l_pathnodes.push_back (gt_node);
+        if (gt_node->parent < 0)
+        {
+            break;
+        }
+        else
+        {
+            gt_node = t_goal->_nodes.at (gt_node->parent);
+        }
+    }
 
 
-    // create Trajectory from path found
+    //--------------------------------------
+    //! create Trajectory from path found
     OpenRAVE::Trajectory::TPOINT pt;
     pt.q.resize(p_parameters->GetDOF());
     
     FOREACH ( itnode, l_pathnodes ) {
         for ( int i = 0; i < p_parameters->GetDOF(); ++i ) {
-            pt.q[i] = (*itnode).nconfig[i];
+            pt.q[i] = (*itnode)->q[i]; /*(*itnode).nconfig[i];*/
         }
         ptraj->AddPoint(pt);
     }
