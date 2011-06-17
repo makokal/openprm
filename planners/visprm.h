@@ -32,6 +32,8 @@
 #include "prmparams.h"
 #include "samplerbase.h"
 
+//TODO - change to visibility graph
+
 namespace openprm
 {
 

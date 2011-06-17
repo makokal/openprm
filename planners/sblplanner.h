@@ -56,13 +56,14 @@ protected:
     v_config v_random_config;
 };
 
+
+/** ======================================================================================= */
+
 SBLPlanner::SBLPlanner(EnvironmentBasePtr penv): PlannerBase(penv)
 {
-    //__description = "SBL Planner (Billy Okal and S. Srinivasa)";
     v_random_config.clear();
     l_pathnodes.clear();
 }
-
 
 SBLPlanner::~SBLPlanner() {}
 
@@ -76,9 +77,12 @@ RobotBasePtr SBLPlanner::GetRobot() const
     return p_robot;
 }
 
+
+/** ======================================================================================= */
+
 bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersConstPtr pparams)
 {
-    RAVELOG_INFO("Initializing Planner\n");
+    RAVELOG_INFO("SBL::Initializing Planner\n");
 
     EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
     p_parameters.reset<PRMParams>(new PRMParams());
@@ -99,6 +103,9 @@ bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersCons
     return true;
 }
 
+
+/** ======================================================================================= */
+
 bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > pOutStream)
 {
     if (!p_parameters)
@@ -113,9 +120,13 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     RobotBase::RobotStateSaver savestate(p_robot);
     CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
 
-    //! build tree and get a path
+    //! \todo build tree and get a path
 
-    /// create Trajectory from path found
+
+
+
+
+    // create Trajectory from path found
     OpenRAVE::Trajectory::TPOINT pt;
     pt.q.resize(p_parameters->GetDOF());
     

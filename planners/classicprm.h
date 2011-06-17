@@ -56,8 +56,8 @@ protected:
 
     RobotBasePtr p_robot;
     boost::shared_ptr<PRMParams> p_parameters;
-    SpatialGraph* g_roadmap;
-//    RandomSampler* p_sampler;
+//    SpatialGraph* g_roadmap;
+    boost::shared_ptr<SpatialGraph> g_roadmap;
     boost::shared_ptr<RandomSampler> p_sampler;
     std::list<spatial_node> l_pathnodes;
     v_config v_random_config;
@@ -82,10 +82,12 @@ protected:
 };
 
 
-///Implems
-ClassicPRM::ClassicPRM ( EnvironmentBasePtr penv ) : PlannerBase ( penv )
+
+/** ======================================================================================= */
+
+ClassicPRM::ClassicPRM ( EnvironmentBasePtr penv )
+    : PlannerBase ( penv )
 {
-    // 	__description = " Basic PRM Planner ";
     v_random_config.clear();
     vv_cs_samples.clear();
     l_pathnodes.clear();
@@ -103,6 +105,9 @@ RobotBasePtr ClassicPRM::GetRobot() const
     return p_robot;
 }
 
+
+/** ======================================================================================= */
+
 bool ClassicPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparams )
 {
     RAVELOG_INFO("Initializing Planner\n");
@@ -116,12 +121,14 @@ bool ClassicPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparam
 
     v_random_config.resize(p_robot->GetActiveDOF());
 
-//    p_sampler = new RandomSampler(p_robot);
     p_sampler.reset(new RandomSampler(p_robot));
 
-    //TODO - add use of medges
-    SpatialGraph g(p_parameters->iMnodes, p_parameters->fNeighthresh);
-    g_roadmap = &g;
+    // initialize spatial graph
+    //! \todo add use of i_nedges
+    g_roadmap.reset(new SpatialGraph(p_parameters->i_nnodes, p_parameters->f_neigh_thresh));
+
+//    SpatialGraph g(p_parameters->iMnodes, p_parameters->fNeighthresh);
+//    g_roadmap = &g;
 
     RAVELOG_INFO("ClassicPRM::building roadmap\n");
     int nodes = buildRoadMap();
@@ -129,6 +136,9 @@ bool ClassicPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparam
     RAVELOG_INFO("ClassicPRM Initialized with Roadmap of [%d] Nodes\n", nodes);
     return true;
 }
+
+
+/** ======================================================================================= */
 
 bool ClassicPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostream> pOutStream )
 {
@@ -177,25 +187,30 @@ bool ClassicPRM::PlanPath ( TrajectoryBasePtr ptraj, boost::shared_ptr<std::ostr
     return true;
 }
 
+
+/** ======================================================================================= */
+
 int ClassicPRM::buildRoadMap()
 {
     // Generate samples from the CSpace
     int i = 0;
-    while (i < p_parameters->iMnodes)
+    while (i < p_parameters->i_nnodes)
     {
         if (p_sampler->GenSingleSample(v_random_config) )
         {
             vv_cs_samples.push_back(v_random_config);
+            v_random_config.clear ();
         }
         else
         {
-            RAVELOG_INFO("Failed to get a sample\n");
+            RAVELOG_WARN("Failed to get a sample\n");
             continue;
         }
         i++;
     }
 
     RAVELOG_DEBUG("connecting samples\n");
+
     for (vv_config_set::iterator it = vv_cs_samples.begin(); it != vv_cs_samples.end(); it++)
     {
         std::list<spatial_node> neighbors;
@@ -206,29 +221,35 @@ int ClassicPRM::buildRoadMap()
         if (nns == 0)
         {
             continue;
+            //! \todo add remove node and/or make check before adding node
         }
-
-        for (std::list<spatial_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++)
+        else    // add neighbors in collision free paths
         {
-            if (!ICollision::CheckCollision(p_parameters, p_robot, (*it), (*itt).nconfig, OPEN) )
+            for (std::list<spatial_node>::iterator itt = neighbors.begin(); itt != neighbors.end(); itt++)
             {
-                if (!g_roadmap->addEdge(vs, (*itt).vertex ))
+                if (!ICollision::CheckCollision(p_parameters, p_robot, (*it), (*itt).nconfig, OPEN) )
                 {
-                    RAVELOG_WARN("Failure in adding an edge\n");
+                    if (!g_roadmap->addEdge(vs, (*itt).vertex ))
+                    {
+                        RAVELOG_WARN("Failure in adding an edge\n");
+                    }
                 }
-            }
-            else
-            {
-                continue;
+                else
+                {
+                    continue;
+                }
             }
         }
     }
 
-    // print the roadmap topographical sketch
+    //! \attention DEBUG::print the roadmap topographical sketch
     g_roadmap->printGraph("classicprm_roadmap.dot");
 
     return g_roadmap->getNodes();
 }
+
+
+/** ======================================================================================= */
 
 bool ClassicPRM::findPath(spatial_node _start, spatial_node _goal)
 {	
@@ -246,15 +267,19 @@ bool ClassicPRM::findPath(spatial_node _start, spatial_node _goal)
     return false;
 }
 
+
+/** ======================================================================================= */
+
 bool ClassicPRM::addStartConfig()
 {
     if ((int)p_parameters->vinitialconfig.size() != p_robot->GetActiveDOF())
     {
-        RAVELOG_ERROR("Specified Start Configuration is valid\n");
+        RAVELOG_ERROR("Specified Start Configuration is invalid\n");
         return false;
     }
 
 
+    //! \todo switch adding and checking neighbor steps
     spatial_vertex st = g_roadmap->addNode(p_parameters->vinitialconfig);
     std::list<spatial_node> nearsamples;
 
@@ -298,6 +323,8 @@ bool ClassicPRM::addStartConfig()
     return true;
 }
 
+/** ======================================================================================= */
+
 bool ClassicPRM::addGoalConfig()
 {
     if ((int)p_parameters->vgoalconfig.size() != p_robot->GetActiveDOF())
@@ -306,6 +333,7 @@ bool ClassicPRM::addGoalConfig()
         return false;
     }
 
+    //! \todo switch adding and checking neighbor steps
 
     spatial_vertex st = g_roadmap->addNode(p_parameters->vgoalconfig);
     std::list<spatial_node> nearsamples;
