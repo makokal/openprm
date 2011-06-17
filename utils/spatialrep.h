@@ -497,7 +497,7 @@ public:
                 }
             }
 
-            if( ICollision::CheckCollision(params,planner->GetRobot(),pnode->q, _vNewConfig, IT_OpenStart) ) {
+            if( ICollision::CheckCollision(params,planner->GetRobot(),pnode->q, _vNewConfig, OPEN_START) ) {
                 if(bHasAdded) {
                     return ET_Sucess;
                 }
