@@ -84,6 +84,9 @@ public:
     }
 };
 
+
+/** ======================================================================================= */
+
 class InfNormMetric
 {
 public:
@@ -223,7 +226,7 @@ public:
 /**
  * \class BCollision
  * \brief Checks for collisions starting at the center and uses divide and conquer approach
- * \TODO - Implement the methods
+ * \todo - Implement the methods
  */
 class BCollision
 {
