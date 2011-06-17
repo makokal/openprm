@@ -134,7 +134,7 @@ public:
 
     CostType operator() ( Vertex u )
     {
-        return DistMetric::Eval ( m_node[m_goal].nconfig , m_node[u].nconfig );
+        return EDMetric::Eval ( m_node[m_goal].nconfig , m_node[u].nconfig );
     }
 
 private:
@@ -201,7 +201,7 @@ public:
         spatial_node nu = getNode ( u );
         spatial_node nv = getNode ( v );
 
-        dReal dist = DistMetric::Eval ( nu.nconfig, nv.nconfig );
+        dReal dist = EDMetric::Eval ( nu.nconfig, nv.nconfig );
         if (dist > neigh_thresh)
         {
             return false;
@@ -321,7 +321,7 @@ public:
                 continue;
             }
 
-            if ( DistMetric::Eval ( nn.nconfig, ( *it ).nconfig ) <= neigh_thresh )
+            if ( EDMetric::Eval ( nn.nconfig, ( *it ).nconfig ) <= neigh_thresh )
             {
                 s_neighbors.push_back ( ( *it ) );
             }

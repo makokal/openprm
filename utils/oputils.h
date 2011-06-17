@@ -60,7 +60,7 @@ enum IntervalType
  * \brief RoadMaps Distance Metric in arbitrary dimensions,
  * It reduces to basic Euclidean distance
  */
-class DistMetric
+class EDMetric
 {
 public:
     static dReal Eval ( v_config q1, v_config q2 )
@@ -81,6 +81,16 @@ public:
         }
 
         return sqrt ( d );
+    }
+};
+
+class InfNormMetric
+{
+public:
+    static dReal Eval (v_config q1, v_config q2)
+    {
+        RAVELOG_VERBOSEA("Not implemented yet");
+        return 0.0;
     }
 };
 

@@ -46,19 +46,16 @@ InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string&
     if( type == OpenRAVE::PT_ProblemInstance && interfacename == "prmplanning" )
     {
         return InterfaceBasePtr(new PRMPlanning(penv));
-    } /*else if ( type == PT_ProblemInstance && interfacename == "gsprmplanning" ) {
-        return InterfaceBasePtr(new GSPRMPlanning(penv));
-    }*/
+    }
     else if( type == OpenRAVE::PT_Planner && interfacename == "classicprm" )
     {
         return InterfaceBasePtr(new ClassicPRM(penv));
-    } else if ( type == PT_Planner && interfacename == "sblplanner" ) {
+    }
+    else if ( type == PT_Planner && interfacename == "sblplanner" ) {
         return InterfaceBasePtr(new SBLPlanner(penv));
     } /*else if ( type == PT_Planner && interfacename == "vprmplanner" ) {
                 return InterfaceBasePtr(new VPRMPlanner(penv));
-        } else if ( type == PT_Planner && interfacename == "goalsetprm" ) {
-                return InterfaceBasePtr(new GoalSetPRM(penv));
-        }*/
+        } */
 
     return InterfaceBasePtr();
 }
@@ -69,11 +66,9 @@ void GetPluginAttributesValidated(PLUGININFO& info)
     info.interfacenames[PT_Planner].push_back("ClassicPRM");
     //     info.interfacenames[PT_Planner].push_back("VPRMPlanner");
     info.interfacenames[PT_Planner].push_back("SBLPlanner");
-    // 	info.interfacenames[PT_Planner].push_back("GoalSetPRM");
-    //
+
     /// problems
     info.interfacenames[PT_ProblemInstance].push_back("PRMPlanning");
-    // 	info.interfacenames[PT_ProblemInstance].push_back("GSPRMPlanning");
 }
 
 RAVE_PLUGIN_API void DestroyPlugin()
