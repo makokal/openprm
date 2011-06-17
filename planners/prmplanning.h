@@ -494,6 +494,7 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
         RAVELOG_DEBUGA("init plan finished\n");
         if ( _planner->PlanPath(ptraj) )
         {
+            RAVELOG_INFO("started planning final path");
             bSuccess = true;
             RAVELOG_INFO("finished planning\n");
             break;

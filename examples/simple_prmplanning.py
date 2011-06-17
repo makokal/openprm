@@ -15,7 +15,7 @@ class PRMPlanner:
 		self.env.SetDebugLevel(DebugLevel.Debug)
 		self.planner = planner
 		self.robot = self.env.GetRobots()[0]
-		self.problem = RaveCreateProblem(self.env, "basemanipulation")
+		self.problem = RaveCreateProblem(self.env, "prmplanning")
 		args = self.robot.GetName()
 		args += ' planner '
 		args += self.planner
