@@ -494,13 +494,12 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
         RAVELOG_DEBUGA("init plan finished\n");
         if ( p_planner->PlanPath(ptraj) )
         {
-            RAVELOG_INFO("started planning final path");
             b_success = true;
-            RAVELOG_INFO("finished planning\n");
+            RAVELOG_DEBUGA("finished planning\n");
             break;
         }
         else
-            RAVELOG_WARN("PlanPath failed, trying again\n");
+            RAVELOG_WARNA("PlanPath failed, trying again\n");
     }
 
     p_planner.reset(); // have to destroy before environment

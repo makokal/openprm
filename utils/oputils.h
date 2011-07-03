@@ -168,8 +168,8 @@ public:
         FOREACH ( it,dQ )
                 *it *= fisteps;
 
-        if ( !!params->_constraintfn )
-            vlastconfig = pQ0;
+//        if ( !!params->_constraintfn )
+//            vlastconfig = pQ0;
         // check for collision along the straight-line path
         // NOTE: this does not check the end config, and may or may
         // not check the start based on the value of 'start'
@@ -180,14 +180,14 @@ public:
                 vtempconfig[i] = pQ0[i] + ( dQ[i] * f );
             }
             params->_setstatefn ( vtempconfig );
-            if ( !!params->_constraintfn )
-            {
-                if ( !params->_constraintfn ( vlastconfig,vtempconfig,0 ) )
-                {
-                    return true;
-                }
-                vlastconfig = pQ0;
-            }
+//            if ( !!params->_constraintfn )
+//            {
+//                if ( !params->_constraintfn ( vlastconfig,vtempconfig,0 ) )
+//                {
+//                    return true;
+//                }
+//                vlastconfig = pQ0;
+//            }
             if ( pvCheckedConfigurations != NULL )
             {
                 params->_getstatefn ( vtempconfig ); // query again in order to get normalizations/joint limits

@@ -479,14 +479,14 @@ public:
                 _vNewConfig[i] = pnode->q[i] + _vNewConfig[i]*fdist;
 
             // project to constraints
-            if( !!params->_constraintfn ) {
+//            if( !!params->_constraintfn ) {
                 params->_setstatefn(_vNewConfig);
-                if( !params->_constraintfn(pnode->q, _vNewConfig, 0) ) {
-                    if(bHasAdded) {
-                        return ET_Sucess;
-                    }
-                    return ET_Failed;
-                }
+//                if( !params->_constraintfn(pnode->q, _vNewConfig, 0) ) {
+//                    if(bHasAdded) {
+//                        return ET_Sucess;
+//                    }
+//                    return ET_Failed;
+//                }
 
                 // it could be the case that the node didn't move anywhere, in which case we would go into an infinite loop
                 if( _distmetricfn(pnode->q, _vNewConfig) <= dReal(0.01)*_fStepLength ) {
@@ -495,7 +495,7 @@ public:
                     }
                     return ET_Failed;
                 }
-            }
+//            }
 
             if( ICollision::CheckCollision(params,planner->GetRobot(),pnode->q, _vNewConfig, OPEN_START) ) {
                 if(bHasAdded) {

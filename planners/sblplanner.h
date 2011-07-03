@@ -61,12 +61,13 @@ protected:
     {
         // verify just in case
         b_connected = false;
+        //! \todo add a stopping heuristic
 
         while(!b_connected)
         {
             if (!(p_sampler->GenSingleSample(v_random_config)) )
             {
-                RAVELOG_WARN("Error in sampling");
+                RAVELOG_DEBUGA("Error in sampling");
             }
             else
             {
@@ -78,6 +79,7 @@ protected:
                 if (ets == ET_Failed)
                 {
                     continue;
+                    RAVELOG_DEBUGA("Failed to extend tree\n");
                 }
                 else
                 {
@@ -88,7 +90,7 @@ protected:
                     if (etg == ET_Connected)
                     {
                         b_connected = true;
-                        RAVELOG_INFO("Trees connected");
+                        RAVELOG_INFOA("Trees connected");
 //                        break;
                     }
                 }
@@ -154,19 +156,22 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
 {
     if (!p_parameters)
     {
-        RAVELOG_ERROR("ClassicPRM::PlanPath - Error, planner not initialized\n");
+        RAVELOG_DEBUGA("Error, planner not initialized\n");
         return false;
     }
 
+    RAVELOG_DEBUGA("locking env\n");
     EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
     uint32_t basetime = timeGetTime();
 
     RobotBase::RobotStateSaver savestate(p_robot);
     CollisionOptionsStateSaver optionstate(GetEnv()->GetCollisionChecker(),GetEnv()->GetCollisionChecker()->GetCollisionOptions()|CO_ActiveDOFs,false);
 
+    RAVELOG_DEBUGA("initializing start and goal trees\n");
     //! build tree and get a path
     int s_id = t_start->AddNode (0, p_parameters->vinitialconfig);
     int g_id = t_goal->AddNode (-1, p_parameters->vgoalconfig);
+    RAVELOG_DEBUGA("initialized start and goal trees\n");
 
     // build the trees
     buildTrees (s_id, g_id);
@@ -179,6 +184,8 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
 
     // ---------------------------------------------
     std::list<tree_node*> l_pathnodes;
+
+    RAVELOG_DEBUGA("concatenating path\n");
 
     // add nodes in the path, from start to connect point
     tree_node* st_node = t_start->_nodes.at (i_start_index);

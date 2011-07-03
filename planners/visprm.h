@@ -53,7 +53,6 @@ protected:
     boost::shared_ptr<PRMParams> p_parameters;
     boost::shared_ptr<SpatialGraph> g_roadmap;
     boost::shared_ptr<RandomSampler> p_sampler;
-    // 	RandomSampler* _sampler;
     std::list<spatial_node> l_pathnodes;
     v_config v_random_config;
     vv_config_set vv_samples;
@@ -80,7 +79,6 @@ protected:
 ///Implems
 VISPRM::VISPRM ( EnvironmentBasePtr penv ) : PlannerBase ( penv )
 {
-    __description = " Visibility PRM Planner ";
     v_random_config.clear();
     vv_samples.clear();
     l_pathnodes.clear();
@@ -112,12 +110,9 @@ bool VISPRM::InitPlan ( RobotBasePtr pbase, PlannerParametersConstPtr pparams )
     v_random_config.resize(p_robot->GetActiveDOF());
 
     p_sampler.reset<RandomSampler>(new RandomSampler(p_robot));
-    // 	_sampler = new RandomSampler(_pRobot);
 
     //TODO - add use of medges
     g_roadmap.reset<SpatialGraph>(new SpatialGraph);
-    // 	SpatialGraph g(_pParameters->iMnodes, _pParameters->fNeighthresh);
-    // 	_gRoadmap = &g;
 
     RAVELOG_INFO("VISPRM::building roadmap\n");
     int nodes = buildRoadMap();
