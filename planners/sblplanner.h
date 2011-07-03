@@ -62,12 +62,23 @@ protected:
         // verify just in case
         b_connected = false;
         //! \todo add a stopping heuristic
+        i_start_index = 0;
+        i_goal_index = 0;
+
+        RAVELOG_DEBUGA("buiding start and goal trees..\n");
 
         while(!b_connected)
         {
-            if (!(p_sampler->GenSingleSample(v_random_config)) )
+            RAVELOG_DEBUGA("iteration...\n");
+//            if (!(p_sampler->GenSingleSample(v_random_config)) )
+//            {
+//                RAVELOG_DEBUGA("Error in sampling");
+//                continue;
+//            }
+            if (!p_parameters->_samplefn(v_random_config))
             {
                 RAVELOG_DEBUGA("Error in sampling");
+                continue;
             }
             else
             {
@@ -78,8 +89,8 @@ protected:
 
                 if (ets == ET_Failed)
                 {
-                    continue;
                     RAVELOG_DEBUGA("Failed to extend tree\n");
+                    continue;
                 }
                 else
                 {
@@ -91,10 +102,12 @@ protected:
                     {
                         b_connected = true;
                         RAVELOG_INFOA("Trees connected");
-//                        break;
+                        break;
                     }
                 }
             }
+
+            RAVELOG_DEBUGA("swapping trees\n");
 
             // swap the trees
             swap(t_start, t_goal);
@@ -140,10 +153,15 @@ bool SBLPlanner::InitPlan(RobotBasePtr pbase, PlannerBase::PlannerParametersCons
     v_random_config.resize(p_robot->GetActiveDOF());
 
     p_sampler.reset<RandomSampler>(new RandomSampler(p_robot));
-    // 	_sampler = new RandomSampler(_pRobot);
 
     t_goal.reset<SpatialTree<SBLPlanner, tree_node> >(new SpatialTree<SBLPlanner, tree_node>);
     t_start.reset<SpatialTree<SBLPlanner, tree_node> >(new SpatialTree<SBLPlanner, tree_node>);
+
+    v_random_config.resize(p_parameters->GetDOF());
+    t_goal->_distmetricfn = p_parameters->_distmetricfn;
+    t_goal->_fStepLength = p_parameters->_fStepLength;
+    t_start->_distmetricfn = p_parameters->_distmetricfn;
+    t_start->_fStepLength = p_parameters->_fStepLength;
 
     RAVELOG_INFO("SBLPlanner Initialized\n");
     return true;
@@ -170,11 +188,12 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     RAVELOG_DEBUGA("initializing start and goal trees\n");
     //! build tree and get a path
     int s_id = t_start->AddNode (0, p_parameters->vinitialconfig);
-    int g_id = t_goal->AddNode (-1, p_parameters->vgoalconfig);
+    int g_id = t_goal->AddNode (-1000, p_parameters->vgoalconfig);
     RAVELOG_DEBUGA("initialized start and goal trees\n");
 
     // build the trees
-    buildTrees (s_id, g_id);
+//    buildTrees (s_id, g_id);
+    buildTrees (0,0);
 
     if ( !b_connected )
     {
