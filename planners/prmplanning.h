@@ -52,13 +52,13 @@ public:
 
 protected:
 
-    RobotBasePtr _robot;
-    std::string _plannerName;
-    std::string _robotName;
-    bool bReusePlanner;
-    bool bExecute;
-    string _trajFilename;
-    boost::shared_ptr<ostream> _outputTrajStream;
+    RobotBasePtr p_robot;
+    std::string s_planner_name;
+    std::string s_robot_name;
+    bool b_reuseplanner;
+    bool b_execute;
+    string s_traj_filename;
+    boost::shared_ptr<ostream> p_output_traj_stream;
 
 
 
@@ -140,7 +140,7 @@ PRMPlanning::~PRMPlanning()
 int PRMPlanning::main ( const std::string& args )
 {
     stringstream ss(args);
-    ss >> _robotName;
+    ss >> s_robot_name;
 
     string cmd;
     while (!ss.eof())
@@ -155,7 +155,7 @@ int PRMPlanning::main ( const std::string& args )
         std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
         if ( cmd == "planner" )
         {
-            ss >> _plannerName;
+            ss >> s_planner_name;
         }
 
         if ( ss.fail() || !ss )
@@ -169,22 +169,22 @@ int PRMPlanning::main ( const std::string& args )
     SetActiveRobots(robots);
 
     PlannerBasePtr planner;
-    if ( _plannerName.size() > 0 )
+    if ( s_planner_name.size() > 0 )
     {
-        planner = RaveCreatePlanner(GetEnv(), _plannerName);
+        planner = RaveCreatePlanner(GetEnv(), s_planner_name);
     }
 
     if ( !planner )
     {
-        _plannerName = "classicprm";
-        planner = RaveCreatePlanner(GetEnv(), _plannerName);
+        s_planner_name = "classicprm";
+        planner = RaveCreatePlanner(GetEnv(), s_planner_name);
         if ( !planner )
         {
-            _plannerName = "";
+            s_planner_name = "";
         }
     }
 
-    RAVELOG_DEBUGA(str(boost::format("PRM Manipulation Planning: using %s planner\n")%_plannerName));
+    RAVELOG_DEBUGA(str(boost::format("PRM Manipulation Planning: using %s planner\n")%s_planner_name));
     return 0;
 }
 
@@ -193,7 +193,7 @@ int PRMPlanning::main ( const std::string& args )
 
 void PRMPlanning::Destroy()
 {
-    _robot.reset();
+    p_robot.reset();
     ProblemInstance::Destroy();
 }
 
@@ -213,14 +213,14 @@ void PRMPlanning::SetActiveRobots ( const std::vector< RobotBasePtr >& robots ) 
 
     vector<RobotBasePtr >::const_iterator itrobot;
     FORIT (itrobot, robots) {
-        if ( strcmp((*itrobot)->GetName().c_str(), _robotName.c_str() ) == 0  ) {
-            _robot = *itrobot;
+        if ( strcmp((*itrobot)->GetName().c_str(), s_robot_name.c_str() ) == 0  ) {
+            p_robot = *itrobot;
             break;
         }
     }
 
-    if ( _robot == NULL ) {
-        RAVELOG_ERRORA("Failed to find %S\n", _robotName.c_str());
+    if ( p_robot == NULL ) {
+        RAVELOG_ERRORA("Failed to find %S\n", s_robot_name.c_str());
         return;
     }
 }
@@ -259,7 +259,7 @@ bool PRMPlanning::GrabBody ( ostream& sout, istream& sinput ) {
         return false;
     }
 
-    _robot->Grab(ptarget);
+    p_robot->Grab(ptarget);
     return true;
 }
 
@@ -272,7 +272,7 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
     if ( !sinput )
         return false;
 
-    TrajectoryBasePtr ptraj = RaveCreateTrajectory(GetEnv(),_robot->GetDOF());
+    TrajectoryBasePtr ptraj = RaveCreateTrajectory(GetEnv(),p_robot->GetDOF());
 
     char sep = ' ';
     if ( filename == "sep" ) {
@@ -284,7 +284,7 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
         // the trajectory is embedded in the stream
         RAVELOG_VERBOSE("PRMPlanning: reading trajectory from stream\n");
 
-        if ( !ptraj->Read(sinput, _robot) ) {
+        if ( !ptraj->Read(sinput, p_robot) ) {
             RAVELOG_ERROR("PRMPlanning: failed to get trajectory\n");
             return false;
         }
@@ -292,7 +292,7 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
     else {
         RAVELOG_VERBOSE(str(boost::format("PRMPlanning: reading trajectory: %s\n")%filename));
         ifstream f(filename.c_str());
-        if ( !ptraj->Read(f, _robot) ) {
+        if ( !ptraj->Read(f, p_robot) ) {
             RAVELOG_ERROR(str(boost::format("PRMPlanning: failed to read trajectory %s\n")%filename));
             return false;
         }
@@ -303,7 +303,7 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
 
     if ( bResetTrans ) {
         RAVELOG_VERBOSE("resetting transformations of trajectory\n");
-        Transform tcur = _robot->GetTransform();
+        Transform tcur = p_robot->GetTransform();
         // set the transformation of every point to the current robot transformation
         FOREACH(itpoint, ptraj->GetPoints()) {
             itpoint->trans = tcur;
@@ -311,7 +311,7 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
     }
 
     RAVELOG_VERBOSE(str(boost::format("executing traj with %d points\n")%ptraj->GetPoints().size()));
-    _robot->SetMotion(ptraj);
+    p_robot->SetMotion(ptraj);
     sout << "1";
     return true;
 }
@@ -321,10 +321,10 @@ bool PRMPlanning::Traj ( ostream& sout, istream& sinput ) {
 
 bool PRMPlanning::ReleaseAll ( ostream& sout, istream& sinput )
 {
-    if ( !!_robot )
+    if ( !!p_robot )
     {
         RAVELOG_DEBUGA("Releasing all bodies\n");
-        _robot->ReleaseAllGrabbed();
+        p_robot->ReleaseAllGrabbed();
     }
     return true;
 }
@@ -356,7 +356,7 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
     std::vector<dReal> goals;
     std::vector<dReal> starts;
     int nMaxTries=3;
-    RobotBase::ManipulatorPtr pmanip = _robot->GetActiveManipulator();
+    RobotBase::ManipulatorPtr pmanip = p_robot->GetActiveManipulator();
 
     string cmd;
     while ( !sinput.eof() )
@@ -371,15 +371,15 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
 
         if ( cmd == "outputtraj" )
         {
-            _outputTrajStream = boost::shared_ptr<ostream>(&sout,null_deleter());
+            p_output_traj_stream = boost::shared_ptr<ostream>(&sout,null_deleter());
         }
         else if ( cmd == "execute" )
         {
-            sinput >> bExecute;
+            sinput >> b_execute;
         }
         else if ( cmd == "writetraj" )
         {
-            sinput >> _trajFilename;
+            sinput >> s_traj_filename;
         }
         else if ( cmd == "jointgoals" || cmd == "armvals" || cmd == "goal" )
         {
@@ -436,8 +436,8 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
     {
         RAVELOG_INFO("Setting initial configuration to the current configuration\n");
         //default case: when not sampling starts and no starts specified, use current config as start
-        params->vinitialconfig.resize(_robot->GetActiveDOF());
-        _robot->GetActiveDOFValues(params->vinitialconfig);
+        params->vinitialconfig.resize(p_robot->GetActiveDOF());
+        p_robot->GetActiveDOFValues(params->vinitialconfig);
     }
     else
     {
@@ -464,9 +464,9 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
 
     RAVELOG_DEBUGA("setting robot to initial config\n");
     // need to check constraints here
-    _robot->SetActiveDOFValues(params->vinitialconfig);
+    p_robot->SetActiveDOFValues(params->vinitialconfig);
 
-    boost::shared_ptr<Trajectory> ptraj(RaveCreateTrajectory(GetEnv(),_robot->GetActiveDOF()));
+    boost::shared_ptr<Trajectory> ptraj(RaveCreateTrajectory(GetEnv(),p_robot->GetActiveDOF()));
 
     RAVELOG_DEBUGA("preparing trajectory\n");
     Trajectory::TPOINT pt;
@@ -474,52 +474,52 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
     ptraj->AddPoint(pt);
 
     RAVELOG_DEBUGA("creating planner\n");
-    boost::shared_ptr<PlannerBase> _planner = RaveCreatePlanner(GetEnv(),_plannerName);
-    if ( !_planner ) {
-        RAVELOG_ERROR(str(boost::format("Failed to create %s PRM planner\n")%_plannerName));
+    boost::shared_ptr<PlannerBase> p_planner = RaveCreatePlanner(GetEnv(),s_planner_name);
+    if ( !p_planner ) {
+        RAVELOG_ERROR(str(boost::format("Failed to create %s PRM planner\n")%s_planner_name));
         return false;
     }
 
     RAVELOG_DEBUGA("starting planning\n");
     // now plan and write trajectory
-    bool bSuccess = false;
+    bool b_success = false;
     for (int iter = 0; iter < nMaxTries; ++iter)
     {
         RAVELOG_DEBUGA("interation %d \n",iter);
-        if ( !_planner->InitPlan(_robot, params) )
+        if ( !p_planner->InitPlan(p_robot, params) )
         {
             RAVELOG_ERROR("InitPlan failed\n");
             return false;
         }
         RAVELOG_DEBUGA("init plan finished\n");
-        if ( _planner->PlanPath(ptraj) )
+        if ( p_planner->PlanPath(ptraj) )
         {
             RAVELOG_INFO("started planning final path");
-            bSuccess = true;
+            b_success = true;
             RAVELOG_INFO("finished planning\n");
             break;
         }
         else
-            RAVELOG_WARN("PlanPath failed\n");
+            RAVELOG_WARN("PlanPath failed, trying again\n");
     }
 
-    _planner.reset(); // have to destroy before environment
+    p_planner.reset(); // have to destroy before environment
 
-    if ( !bSuccess ) {
+    if ( !b_success ) {
         return false;
     }
 
     // save the traj
-    TrajectoryBasePtr pfulltraj = RaveCreateTrajectory(GetEnv(),_robot->GetDOF());
-    _robot->GetFullTrajectoryFromActive(pfulltraj, ptraj);
-    pfulltraj->CalcTrajTiming(_robot, pfulltraj->GetInterpMethod(), true, false);
-    ofstream outfile(_trajFilename.c_str(), ios::out);
+    TrajectoryBasePtr pfulltraj = RaveCreateTrajectory(GetEnv(),p_robot->GetDOF());
+    p_robot->GetFullTrajectoryFromActive(pfulltraj, ptraj);
+    pfulltraj->CalcTrajTiming(p_robot, pfulltraj->GetInterpMethod(), true, false);
+    ofstream outfile(s_traj_filename.c_str(), ios::out);
     pfulltraj->Write(outfile, Trajectory::TO_IncludeTimestamps|Trajectory::TO_IncludeBaseTransformation);
     outfile.close();
     //chmod(filename.c_str(), S_IRWXG | S_IRWXO | S_IRWXU); //chmod 777
 
     // execute
-    SetActiveTrajectory(_robot, ptraj, bExecute, _trajFilename, _outputTrajStream);
+    SetActiveTrajectory(p_robot, ptraj, b_execute, s_traj_filename, p_output_traj_stream);
     sout << "1";
 
     return true;

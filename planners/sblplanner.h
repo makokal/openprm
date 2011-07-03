@@ -59,6 +59,8 @@ protected:
 
     inline void buildTrees(int start_id, int goal_id)
     {
+        // verify just in case
+        b_connected = false;
 
         while(!b_connected)
         {
@@ -176,7 +178,6 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     }
 
     // ---------------------------------------------
-    //! \todo search for path in the connected tree
     std::list<tree_node*> l_pathnodes;
 
     // add nodes in the path, from start to connect point
@@ -209,6 +210,7 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
         }
     }
 
+    RAVELOG_DEBUGA("Path has [%d] nodes\n", l_pathnodes.size());
 
     //--------------------------------------
     //! create Trajectory from path found
