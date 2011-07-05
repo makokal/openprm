@@ -34,7 +34,8 @@
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
 #include "planners/classicprm.h"
-#include "planners/sblplanner.h"
+//#include "planners/sblplanner.h"
+#include "planners/sblplanner2.h"
 #include "planners/prmplanning.h"
 
 using namespace OpenRAVE;

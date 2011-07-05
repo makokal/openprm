@@ -70,18 +70,20 @@ protected:
         while(!b_connected)
         {
             RAVELOG_DEBUGA("iteration...\n");
-//            if (!(p_sampler->GenSingleSample(v_random_config)) )
-//            {
-//                RAVELOG_DEBUGA("Error in sampling");
-//                continue;
-//            }
-            if (!p_parameters->_samplefn(v_random_config))
+            if (!(p_sampler->GenSingleSample(v_random_config)) )
             {
                 RAVELOG_DEBUGA("Error in sampling");
                 continue;
             }
+//            if (!p_parameters->_samplefn(v_random_config))
+//            {
+//                RAVELOG_DEBUGA("Error in sampling");
+//                continue;
+//            }
             else
             {
+                /* DEBUG */ RAVELOG_DEBUGA("Sampled, extending trees...\n");
+
                 ExtendType ets, etg;
 
                 t_start->Extend (t_start->GetConfig (start_id), i_start_index);
@@ -92,8 +94,9 @@ protected:
                     RAVELOG_DEBUGA("Failed to extend tree\n");
                     continue;
                 }
-                else
-                {
+
+//                else
+//                {
                     t_goal->Extend (t_goal->GetConfig (goal_id), i_goal_index);
                     etg = t_goal->Extend (t_start->GetConfig (i_start_index), i_goal_index);
 
@@ -104,7 +107,7 @@ protected:
                         RAVELOG_INFOA("Trees connected");
                         break;
                     }
-                }
+//                }
             }
 
             RAVELOG_DEBUGA("swapping trees\n");
@@ -192,8 +195,8 @@ bool SBLPlanner::PlanPath(TrajectoryBasePtr ptraj, boost::shared_ptr< ostream > 
     RAVELOG_DEBUGA("initialized start and goal trees\n");
 
     // build the trees
-//    buildTrees (s_id, g_id);
-    buildTrees (0,0);
+    buildTrees (s_id, g_id);
+//    buildTrees (0,0);
 
     if ( !b_connected )
     {
