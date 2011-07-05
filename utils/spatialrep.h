@@ -228,6 +228,8 @@ public:
 
         spatial_vertex start = f.vertex;
 
+        RAVELOG_INFO ( "Running Dijikstra\n" );
+
         boost::dijkstra_shortest_paths ( p_graph, start, boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ) );
 
         spatial_vertex child = t.vertex;
@@ -273,14 +275,15 @@ public:
         try
         {
             boost::astar_search (
-                        p_graph,
-                        start,
-                        distance_heuristic<spatial_graph, graph_cost, spatial_node*> ( node_map, goal ),
-                        boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<spatial_vertex> ( goal ) )
-                        );
+                    p_graph,
+                    start,
+                    distance_heuristic<spatial_graph, graph_cost, spatial_node*> ( node_map, goal ),
+                    boost::predecessor_map ( &p[0] ).distance_map ( &d[0] ).visitor ( astar_goal_visitor<spatial_vertex> ( goal ) )
+                    );
         }
         catch ( found_goal fg )
         {
+            RAVELOG_INFO("Found goal\n");
             for ( spatial_vertex v = goal;; v = p[v] )
             {
                 s_path.push_front ( getNode ( v ) );
@@ -305,11 +308,11 @@ public:
             return 0;
         }
 
-        if ( n > node_list.size() )
-        {
-            RAVELOG_ERROR ( "vertex non existent vertexid = [%d]  num_vert[%d]\n", n, boost::num_vertices ( p_graph ) );
-            return 0;
-        }
+//        if ( n > (node_list.size() + 1) )
+//        {
+//            RAVELOG_ERROR ( "vertex non existent vertexid = [%d]  num_vert[%d]\n", n, boost::num_vertices ( p_graph ) );
+//            return 0;
+//        }
 
         spatial_node nn = getNode ( n );
         s_neighbors.clear();

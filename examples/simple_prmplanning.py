@@ -60,7 +60,7 @@ def run():
 		T3 = [-0.85, 1.34, -0.074, 2.23, -1.26, -1.558, 1.59]
 		
 		raw_input('Press any key to start')
-		res = prm.runPlanner(goal=[-0.85, 1.34, -0.074, 2.23, -1.26, -1.558, 1.59])#, outputtraj='trajoutput.txt')
+		res = prm.runPlanner(goal=[-0.85, 1.34, -0.074, 2.23, -1.26, -1.558, 1.59, 0, 0, 0, 0])#, outputtraj='trajoutput.txt')
 		time.sleep(2)
         
         

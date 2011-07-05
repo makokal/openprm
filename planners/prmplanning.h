@@ -383,7 +383,8 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
         }
         else if ( cmd == "jointgoals" || cmd == "armvals" || cmd == "goal" )
         {
-            goals.resize(pmanip->GetArmIndices().size());
+//            goals.resize(pmanip->GetArmIndices().size());
+            goals.resize(p_robot->GetActiveDOF());
             FOREACH(it, goals)
             {
                 sinput >> *it;
@@ -448,15 +449,15 @@ bool PRMPlanning::RunPRM ( ostream& sout, istream& sinput )
         }
     }
 
-    if ( goals.size() != pmanip->GetArmIndices().size() ) {
-        RAVELOG_WARN("Invalid params [manip indices=%d] and [vgoal size=%d]\n", pmanip->GetArmIndices().size(), goals.size());
-        return false;
-    }
+//    if ( goals.size() != pmanip->GetArmIndices().size() ) {
+//        RAVELOG_WARN("Invalid params [manip indices=%d] and [vgoal size=%d]\n", pmanip->GetArmIndices().size(), goals.size());
+//        return false;
+//    }
 
     //add any goals if they were specified
     if ( goals.size() > 0 )
     {
-        RAVELOG_DEBUGA("adding speficied goals\n");
+        RAVELOG_DEBUGA("adding speficied goals of size %d\n", (int)goals.size());
         for (int i = 0; i < (int)goals.size(); i++) {
             params->vgoalconfig.push_back(goals[i]);
         }

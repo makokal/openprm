@@ -213,7 +213,7 @@ int ClassicPRM::buildRoadMap()
         std::list<spatial_node> neighbors;
         spatial_vertex vs = g_roadmap->addNode(*it);
 
-        RAVELOG_DEBUGA("added node\n");
+//        RAVELOG_DEBUGA("added node\n");
         int nns = g_roadmap->findNN(vs, neighbors);
         if (nns == 0)
         {
@@ -248,19 +248,23 @@ int ClassicPRM::buildRoadMap()
 
 /** ======================================================================================= */
 
-//bool ClassicPRM::findPath(spatial_node _start, spatial_node _goal)
 bool ClassicPRM::findPath ()
 {	
-    if ( g_roadmap->findPathAS(n_start, n_goal, l_pathnodes) )
+    if ( g_roadmap->findPathDK(n_start, n_goal, l_pathnodes) )
+        {
+            RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
+            return true;
+        }
+    else if ( g_roadmap->findPathAS(n_start, n_goal, l_pathnodes) )
     {
         RAVELOG_VERBOSE("Found Goal with A* \n");
         return true;
     }
-    else if ( g_roadmap->findPathDK(n_start, n_goal, l_pathnodes) )
-    {
-        RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
-        return true;
-    }
+//    else if ( g_roadmap->findPathDK(n_start, n_goal, l_pathnodes) )
+//    {
+//        RAVELOG_VERBOSE("Found Goal with Dijkstra \n");
+//        return true;
+//    }
 
     return false;
 }
@@ -299,6 +303,8 @@ bool ClassicPRM::addStartConfig()
         spatial_node nn = g_roadmap->getNode(st);
         if (!ICollision::CheckCollision(p_parameters, p_robot, (*it).nconfig, nn.nconfig, OPEN) )
         {
+            /* DEBUG */RAVELOG_DEBUGA("C Space dimension %d\n", (int)(*it).nconfig.size());
+
             if (g_roadmap->addEdge((*it).vertex, st))
             {
                 RAVELOG_INFO("Added the start configuration\n");
@@ -327,9 +333,11 @@ bool ClassicPRM::addGoalConfig()
 {
     if ((int)p_parameters->vgoalconfig.size() != p_robot->GetActiveDOF())
     {
-        RAVELOG_ERROR("Specified Goal Configuration is valid\n");
-        return false;
+        RAVELOG_ERROR("Specified Goal Configuration is valid, active dof=%d, goal config size=%d\n", p_robot->GetActiveDOF(), (int)p_parameters->vgoalconfig.size());
+//        return false;
     }
+
+
 
     //! \todo switch adding and checking neighbor steps
 
@@ -354,6 +362,9 @@ bool ClassicPRM::addGoalConfig()
         spatial_node nn = g_roadmap->getNode(st);
         if (!ICollision::CheckCollision(p_parameters, p_robot, (*it).nconfig, nn.nconfig, OPEN) )
         {
+
+            /* DEBUG */RAVELOG_DEBUGA("C Space dimension %d\n", (int)(*it).nconfig.size());
+
             if (g_roadmap->addEdge((*it).vertex, st))
             {
                 RAVELOG_INFO("Added the Goal configuration\n");
