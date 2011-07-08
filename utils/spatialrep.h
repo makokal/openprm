@@ -59,7 +59,7 @@ boost::no_property,
 boost::property<boost::edge_weight_t, graph_cost> >
 spatial_graph;
 typedef spatial_graph::vertex_descriptor spatial_vertex;
-typedef  std::pair<spatial_vertex, spatial_vertex> spatial_edge;
+typedef std::pair<spatial_vertex, spatial_vertex> spatial_edge;
 typedef boost::property_map<spatial_graph, boost::edge_weight_t>::type weight_map;
 typedef spatial_graph::edge_descriptor e_descriptor;
 typedef boost::graph_traits<spatial_graph>::out_edge_iterator out_edge_iterator;
