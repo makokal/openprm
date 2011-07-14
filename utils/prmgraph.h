@@ -9,6 +9,8 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "../plugindefs.h"
+
 namespace openprm
 {
 
@@ -56,7 +58,7 @@ public:
     {
         if ( q1.size() != q2.size() )
         {
-//             RAVELOG_ERROR ( "Invalid Configuration dimensions [%d] and [%d], Hint: must be equal\n",q1.size(), q2.size() );
+            RAVELOG_ERROR ( "Invalid Configuration dimensions [%d] and [%d], Hint: must be equal\n",q1.size(), q2.size() );
         }
 
         double d = 0;
@@ -119,7 +121,7 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
 {
 	if (conf.empty())
 	{
-// 		RAVELOG_ERRORA("Trying to add a node with empty configuration");
+		RAVELOG_ERRORA("Trying to add a node with empty configuration");
 		return NULL;
 	}
 	else
@@ -141,7 +143,7 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
     // ensure the edge does not exist or the vertices are not the same
     if ( edgeExists ( e_start, e_end ) || ( e_start == e_end ) )
     {
-//             RAVELOG_WARN ( "edge already exists\n" );
+        RAVELOG_WARN ( "edge already exists\n" );
         return false;
     }
     
@@ -154,7 +156,7 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 	// compute edge length
 	if ( elen > f_max_edge_length)
 	{
-// 		RAVELOG_DEBUGA("Nodes are too far apart, edge cannot be added\n");
+		RAVELOG_DEBUGA("Nodes are too far apart, edge cannot be added\n");
 		return false;
 	}
 	
@@ -164,7 +166,7 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 	boost::tie(edged, b_success) = boost::add_edge(e_start, e_end, g_roadmap);
 	if (!b_success)
 	{
-// 		RAVELOG_DEBUGA("Boost error in adding edge\n");
+		RAVELOG_DEBUGA("Boost error in adding edge\n");
 		return false;
 	}
 	
@@ -178,8 +180,27 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 
 int PRMGraph::findAllNN ( node_t n, list< node_t >& l_neighbors )
 {
-
+	if (l_nodes.size() <= 1)
+	{
+		return 0;
+	}
+	
+	l_neighbors.clear();
+	for ( std::vector<spatial_node>::iterator it = l_nodes.begin(); it != l_nodes.end(); it++ )
+    {
+		// skip all nodes not connected with
+		if (!edgeExists(n, (*it)) )
+		{
+			continue;
+		}
+		l_neighbors.push_back( (*it) );
+	}
+	
+	//! \todo sort the neighbors using distance
+	
+	return (int)l_neighbors.size();
 }
+
 int PRMGraph::findNNWithin ( node_t n, list< node_t >& l_neighbors, double n_thresh )
 {
 

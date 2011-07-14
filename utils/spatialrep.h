@@ -319,7 +319,7 @@ public:
         for ( std::vector<spatial_node>::iterator it = node_list.begin(); it != node_list.end(); it++ )
         {
             //avoid vertices already connected with
-            if ( edgeExists ( n, ( *it ).vertex ) )
+            if ( !edgeExists ( n, ( *it ).vertex ) )
             {
                 continue;
             }
