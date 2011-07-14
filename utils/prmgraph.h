@@ -86,12 +86,14 @@ public:
 
 	node_t addNode( const config_t conf );
 	bool addEdge( node_t e_start, node_t e_end );
-	int findAllNN( node_t n, std::list<node_t>& l_neighbors );
-	int findNNWithin( node_t n, std::list<node_t>& l_neighbors, double n_thresh);
+	int findNN( node_t n, std::list<node_t>& l_neighbors );
 	
 protected:
 	
+	typedef std::pair<node_t, double> dnode_t; 
+	
 	inline bool edgeExists( node_t e_start, node_t e_end );
+	inline bool compareNodes( dnode_t x, dnode_t y);
 	
 	
 	graph_t g_roadmap;
@@ -107,6 +109,8 @@ protected:
 	boost::property_map<graph_t, boost::vertex_name_t>::type node_names;
 };
 
+//! ====================================================================================================
+
 PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_node, double max_elen )
 	: i_dimension(dim), i_max_edge_branch(max_edges), i_max_nodes(max_node), f_max_edge_length(max_elen)
 {
@@ -116,6 +120,8 @@ PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_
 	v_edges.clear();
 }
 PRMGraph::~PRMGraph() {}
+
+//! ====================================================================================================
 
 node_t PRMGraph::addNode ( const openprm::config_t conf )
 {
@@ -137,6 +143,8 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
         return node;
 	}
 }
+
+//! ====================================================================================================
 
 bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 {
@@ -177,14 +185,16 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 }
 
 
-
-int PRMGraph::findAllNN ( node_t n, list< node_t >& l_neighbors )
+//! ====================================================================================================
+int PRMGraph::findNN ( node_t n, list< node_t >& l_neighbors )
 {
 	if (l_nodes.size() <= 1)
 	{
 		return 0;
 	}
 	
+	std::list<dnode_t> l_dnodes;
+	l_dnodes.clear();
 	l_neighbors.clear();
 	for ( std::vector<spatial_node>::iterator it = l_nodes.begin(); it != l_nodes.end(); it++ )
     {
@@ -193,21 +203,42 @@ int PRMGraph::findAllNN ( node_t n, list< node_t >& l_neighbors )
 		{
 			continue;
 		}
-		l_neighbors.push_back( (*it) );
+		double dist = EMetric::computeLength(n.config, (*it).config);
+		l_dnodes.push_back(std::make_pair<node_t,double>((*it), dist));
 	}
 	
-	//! \todo sort the neighbors using distance
+	// sort the neighbors by distance to current node
+	l_dnodes.sort(compareNodes);
+	for ( std::list<dnode_t>::iterator k = l_dnodes.begin(); k != l_dnodes.end(); k++)
+	{
+		l_neighbors.push_front((*k).first);
+	}
+	l_dnodes.clear();
 	
 	return (int)l_neighbors.size();
 }
 
-int PRMGraph::findNNWithin ( node_t n, list< node_t >& l_neighbors, double n_thresh )
-{
+//! ====================================================================================================
 
+bool PRMGraph::compareNodes(dnode_t x, dnode_t y)
+{
+	if (x.second > y.second)
+	{
+		return true;
+	}
+	return false;
 }
+
+//! ====================================================================================================
+
 bool PRMGraph::edgeExists ( node_t e_start, node_t e_end )
 {
-
+	if (e_start == e_end)
+	{
+		return true;
+	}
+	
+// 	boost::adjacency_iterator<graph_t, graph_t::vertex_descrip>
 }
 
 
