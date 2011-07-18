@@ -147,6 +147,7 @@ protected:
 	graph_t g_roadmap;
 	std::list<node_t> l_nodes;
 	std::vector<edge_t> v_edges;
+	spatial_node *node_map;
 	
     unsigned int i_dimension;
     unsigned int i_max_edge_branch;
@@ -166,6 +167,9 @@ PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_
 	g_roadmap.clear();
 	l_nodes.clear();
 	v_edges.clear();
+	
+	spatial_node nmap[max_node];
+	node_map = nmap;
 	
 	edge_lengths = boost::get(boost::edge_weight, g_roadmap);
 	node_names = boost::get(boost::vertex_name, g_roadmap);
@@ -190,6 +194,9 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
 		
         node_t node ( n_id, conf );
         l_nodes.push_back ( node );
+		
+		//!\todo cleanup
+		node_map[n_id] = node;
 
         return node;
 	}
@@ -309,8 +316,32 @@ bool PRMGraph::edgeExists ( node_t e_start, node_t e_end )
 
 bool PRMGraph::findPathAstar(node_t n_start, node_t n_goal, list< node_t >& l_path)
 {
+	std::vector<vertex_t> p(boost::num_vertices(g_roadmap));
+	std::vector<double> d(boost::num_vertices(g_roadmap));
 	
-	return true;
+	try
+	{
+		boost::astar_search(g_roadmap,
+							n_start,
+							distance_heuristic<graph_t, double, spatial_node*>(node_map, g_roadmap),
+							boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<vertex_t>(n_goal))
+							);
+	}
+	catch ( found_goal )
+	{
+		RAVELOG_INFO("Found a path\n");
+		for ( vertex_t v = n_goal;; v = p[v] )
+        {
+            l_path.push_front ( node_map[v] );
+            if ( p[v] == v )
+            {
+                return true;
+// 				break;
+            }
+        }
+    }
+	
+	return false;
 }
 
 
