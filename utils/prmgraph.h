@@ -37,17 +37,24 @@ typedef boost::adjacency_list<
 	edge_property> 
 	graph_t;
 
+typedef boost::graph_traits<graph_t>::out_edge_iterator out_edge_iter_t;
+
+typedef boost::adjacency_iterator_generator<graph_t, graph_t::vertex_descriptor, out_edge_iter_t>::type adjacency_iter_t;
+
+typedef graph_t::vertex_descriptor vertex_t;
 
 // A spatial node
 typedef struct spatial_node
 {
-	spatial_node(graph_t::vertex_descriptor id, config_t conf) : node_id(id), config(conf) {}
-    graph_t::vertex_descriptor node_id;
+	spatial_node(vertex_t id, config_t conf) : node_id(id), config(conf) {}
+    vertex_t node_id;
     config_t config;
 } node_t;
 
 // A spatial Edge
 typedef std::pair<node_t, node_t> edge_t;
+
+struct found_goal {};
 
 //! ===============================================================================================================
 //! Metrics and Utils
@@ -76,6 +83,45 @@ public:
 };
 
 //! ===============================================================================================================
+
+template <class Vertex>
+class astar_goal_visitor : public boost::default_astar_visitor
+{
+public:
+    astar_goal_visitor ( Vertex goal ) : m_goal(goal) {}
+
+    template <class Graph>
+    void examine_vertex ( Vertex u, Graph& g )
+    {
+        if ( u == m_goal )
+        {
+            throw found_goal();
+        }
+    }
+
+private:
+    Vertex m_goal;
+};
+
+//! ===============================================================================================================
+template <class MutableGraph, class CostType, class LocMap>
+class distance_heuristic : public boost::astar_heuristic<MutableGraph, CostType> {
+public:
+	typedef typename boost::graph_traits<MutableGraph>::vertex_descriptor Vertex;
+	
+	distance_heuristic(LocMap l, Vertex goal) : m_location(l), m_goal(goal) {}
+	
+	CostType operator()(Vertex u) 
+	{
+		return (EMetric::computeLength(m_location[m_goal].config, m_location[u].config));
+	}
+private:
+	LocMap m_location;
+	Vertex m_goal;
+};
+
+
+//! ===============================================================================================================
 //! \class PRMGraph
 //! \brief Represents a spatial graph in specified dimension
 class PRMGraph
@@ -87,6 +133,7 @@ public:
 	node_t addNode( const config_t conf );
 	bool addEdge( node_t e_start, node_t e_end );
 	int findNN( node_t n, std::list<node_t>& l_neighbors );
+	bool findPathAstar( node_t n_start, node_t n_goal, std::list<node_t>& l_path );
 	
 protected:
 	
@@ -94,6 +141,7 @@ protected:
 	
 	inline bool edgeExists( node_t e_start, node_t e_end );
 	inline bool compareNodes( dnode_t x, dnode_t y);
+	inline node_t nodeAtVertex(vertex_t v);
 	
 	
 	graph_t g_roadmap;
@@ -118,6 +166,9 @@ PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_
 	g_roadmap.clear();
 	l_nodes.clear();
 	v_edges.clear();
+	
+	edge_lengths = boost::get(boost::edge_weight, g_roadmap);
+	node_names = boost::get(boost::vertex_name, g_roadmap);
 }
 PRMGraph::~PRMGraph() {}
 
@@ -132,7 +183,7 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
 	}
 	else
 	{
-		graph_t::vertex_descriptor n_id = boost::add_vertex ( g_roadmap );
+		vertex_t n_id = boost::add_vertex ( g_roadmap );
 		
 		// add node property
 		node_names[n_id] = boost::lexical_cast<std::string>(n_id);
@@ -238,9 +289,29 @@ bool PRMGraph::edgeExists ( node_t e_start, node_t e_end )
 		return true;
 	}
 	
-// 	boost::adjacency_iterator<graph_t, graph_t::vertex_descrip>
+	adjacency_iter_t it_beg, it_end;
+	
+	boost::tie ( it_beg, it_end ) = boost::adjacent_vertices ( e_end, g_roadmap );
+	
+	while ( it_beg != it_end )
+    {
+		//! \todo add a heuristic to allow arbitrary closeness
+        if ( e_start == ( *it_beg ) )
+        {
+            return true;
+        }
+        ++it_beg;
+    }
+    return false;
 }
 
+//! ====================================================================================================
+
+bool PRMGraph::findPathAstar(node_t n_start, node_t n_goal, list< node_t >& l_path)
+{
+	
+	return true;
+}
 
 
 }
