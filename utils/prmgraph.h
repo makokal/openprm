@@ -141,7 +141,7 @@ protected:
 	
 	inline bool edgeExists( node_t e_start, node_t e_end );
 	inline bool compareNodes( dnode_t x, dnode_t y);
-	inline node_t nodeAtVertex(vertex_t v);
+//	inline node_t nodeAtVertex(vertex_t v);
 	
 	
 	graph_t g_roadmap;
@@ -163,7 +163,6 @@ protected:
 PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_node, double max_elen )
 	: i_dimension(dim), i_max_edge_branch(max_edges), i_max_nodes(max_node), f_max_edge_length(max_elen)
 {
-	//! \TODO add checks for non-zero vals
 	g_roadmap.clear();
 	l_nodes.clear();
 	v_edges.clear();
