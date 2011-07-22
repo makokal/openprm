@@ -46,6 +46,7 @@ typedef graph_t::vertex_descriptor vertex_t;
 // A spatial node
 typedef struct spatial_node
 {
+    spatial_node();
 	spatial_node(vertex_t id, config_t conf) : node_id(id), config(conf) {}
     vertex_t node_id;
     config_t config;
@@ -170,7 +171,7 @@ PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_
 	spatial_node nmap[max_node];
 	node_map = nmap;
 	
-    edge_lengths = boost::get(boost::edge_weight, g_roa dmap);
+    edge_lengths = boost::get(boost::edge_weight, g_roadmap);
 	node_names = boost::get(boost::vertex_name, g_roadmap);
 }
 PRMGraph::~PRMGraph() {}
@@ -182,7 +183,8 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
 	if (conf.empty())
 	{
 		RAVELOG_ERRORA("Trying to add a node with empty configuration");
-		return NULL;
+//		return NULL;
+        return spatial_node();
 	}
 	else
 	{
@@ -206,16 +208,16 @@ node_t PRMGraph::addNode ( const openprm::config_t conf )
 bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 {
     // ensure the edge does not exist or the vertices are not the same
-    if ( edgeExists ( e_start, e_end ) || ( e_start == e_end ) )
+    if ( edgeExists ( e_start, e_end ) || ( e_start.node_id == e_end.node_id ) )
     {
         RAVELOG_WARN ( "edge already exists\n" );
         return false;
     }
     
     // check for max edges per node(to control how dense the roadmap is)
-	if (/* \TODO check for max edges*/ )
-	{
-	}
+//	if (/* \TODO check for max edges*/ )
+//	{
+//	}
 	
 	double elen = EMetric::computeLength(e_start.config, e_end.config);
 	// compute edge length
@@ -228,7 +230,7 @@ bool PRMGraph::addEdge ( node_t e_start, node_t e_end )
 	graph_t::edge_descriptor edged;
 	bool b_success;
 	
-	boost::tie(edged, b_success) = boost::add_edge(e_start, e_end, g_roadmap);
+    boost::tie(edged, b_success) = boost::add_edge(e_start.node_id, e_end.node_id, g_roadmap);
 	if (!b_success)
 	{
 		RAVELOG_DEBUGA("Boost error in adding edge\n");
@@ -253,7 +255,7 @@ int PRMGraph::findNN ( node_t n, list< node_t >& l_neighbors )
 	std::list<dnode_t> l_dnodes;
 	l_dnodes.clear();
 	l_neighbors.clear();
-	for ( std::vector<spatial_node>::iterator it = l_nodes.begin(); it != l_nodes.end(); it++ )
+    for ( std::list<spatial_node>::iterator it = l_nodes.begin(); it != l_nodes.end(); it++ )
     {
 		// skip all nodes not connected with
 		if (!edgeExists(n, (*it)) )
@@ -290,19 +292,19 @@ bool PRMGraph::compareNodes(dnode_t x, dnode_t y)
 
 bool PRMGraph::edgeExists ( node_t e_start, node_t e_end )
 {
-	if (e_start == e_end)
+    if (e_start.node_id == e_end.node_id)
 	{
 		return true;
 	}
 	
 	adjacency_iter_t it_beg, it_end;
 	
-	boost::tie ( it_beg, it_end ) = boost::adjacent_vertices ( e_end, g_roadmap );
+    boost::tie ( it_beg, it_end ) = boost::adjacent_vertices ( e_end.node_id, g_roadmap );
 	
 	while ( it_beg != it_end )
     {
 		//! \todo add a heuristic to allow arbitrary closeness
-        if ( e_start == ( *it_beg ) )
+        if ( e_start.node_id == ( *it_beg ) )
         {
             return true;
         }
