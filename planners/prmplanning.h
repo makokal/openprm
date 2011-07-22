@@ -69,6 +69,8 @@ protected:
     bool RunPRM ( ostream& sout, istream& sinput );
     bool BuildRoadMap ( ostream& sout, istream& sinput );
     bool RunQuery ( ostream& sout, istream& sinput );
+    bool TestPrmGraph ( ostream& sout, istream& sinput );
+
 
     inline std::string getfilename_withseparator(istream& sinput, char separator)
     {
@@ -127,6 +129,9 @@ PRMPlanning::PRMPlanning( EnvironmentBasePtr penv ) : ProblemInstance ( penv )
 
     RegisterCommand("ReleaseAll",boost::bind(&PRMPlanning::ReleaseAll,this,_1,_2),
                     "Releases all grabbed bodies (RobotBase::ReleaseAllGrabbed).");
+
+    RegisterCommand("TestPrmGraph",boost::bind(&PRMPlanning::TestPrmGraph,this,_1,_2),
+                    "Test the prm graph by sampling configs and displaying map (PRMPlanning::TestPrmGraph).");
 }
 
 PRMPlanning::~PRMPlanning()
@@ -568,6 +573,17 @@ bool PRMPlanning::SetActiveTrajectory ( RobotBasePtr robot, TrajectoryBasePtr pA
     return bExecuted;
 }
 
+
+
+
+
+bool PRMPlanning::TestPrmGraph( ostream& sout, istream& sinput )
+{
+    //! create a simple graph and render it on the viewer
+    RAVELOG_WARN("Not implemented yet\n");
+    return false;
 }
 
+
+}
 #endif // PRMPLANNING_H
