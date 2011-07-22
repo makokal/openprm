@@ -170,7 +170,7 @@ PRMGraph::PRMGraph ( unsigned int dim, unsigned int max_edges, unsigned int max_
 	spatial_node nmap[max_node];
 	node_map = nmap;
 	
-	edge_lengths = boost::get(boost::edge_weight, g_roadmap);
+    edge_lengths = boost::get(boost::edge_weight, g_roa dmap);
 	node_names = boost::get(boost::vertex_name, g_roadmap);
 }
 PRMGraph::~PRMGraph() {}

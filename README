@@ -5,13 +5,29 @@ To compile, run the following:
 
 	[Ensure you have all  OpenRAVE installed, check openrave.programmingvision.com to see how]
 
+	check out the source using;
+
+	hg clone ssh://hg@bitbucket.org/makokal/openprm	
+	cd openprm
 	mkdir build
 	cd build
 	cmake ../
 	make
 	make install
 
-	[Set up paths as explained in the wiki]
+
+	cd ..
+	export OPENRAVE_PLUGINS=$OPENRAVE_PLUGINS:`pwd`/plugins
+
+
+
+
+	You can test if this worked by executing;
+
+	openrave.py --listplugins
+
+
+	and look for the Planners in openprm.
 
 
 The project has undergone many changes, update coming soon
