@@ -331,7 +331,7 @@ bool PRMGraph::findPathAstar(node_t n_start, node_t n_goal, list< node_t >& l_pa
 	catch ( found_goal )
 	{
 		RAVELOG_INFO("Found a path\n");
-		for ( vertex_t v = n_goal;; v = p[v] )
+        for ( vertex_t v = n_goal.node_id;; v = p[v] )
         {
             l_path.push_front ( node_map[v] );
             if ( p[v] == v )

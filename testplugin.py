@@ -8,6 +8,7 @@ try:
     env=Environment()
     env.Load('scenes/opscene.env.xml')
     prmplan = RaveCreateProblem(env,'prmplanning')
-    print prmplan.SendCommand('help')
+    print prmplan.SendCommand('TestPrmGraph')
+    raw_input('Done with testing')
 finally:
     RaveDestroy()
