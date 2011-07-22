@@ -35,6 +35,7 @@
 #define PRMPLANNING_H
 
 #include "prmparams.h"
+#include "roadmap_inspector.h"
 
 namespace openprm
 {
@@ -580,7 +581,15 @@ bool PRMPlanning::SetActiveTrajectory ( RobotBasePtr robot, TrajectoryBasePtr pA
 bool PRMPlanning::TestPrmGraph( ostream& sout, istream& sinput )
 {
     //! create a simple graph and render it on the viewer
-    RAVELOG_WARN("Not implemented yet\n");
+//    RAVELOG_WARN("Not implemented yet\n");
+
+    boost::shared_ptr<RMapInspector> p_graph_test;
+
+    p_graph_test.reset(new RMapInspector(50));
+    p_graph_test->generateSamples();
+    p_graph_test->createGraph();
+    p_graph_test->renderGraph();
+
     return false;
 }
 

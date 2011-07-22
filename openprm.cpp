@@ -33,9 +33,9 @@
 
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
-#include "planners/classicprm.h"
+//#include "planners/classicprm.h"
 //#include "planners/sblplanner.h"
-#include "planners/sblplanner2.h"
+//#include "planners/sblplanner2.h"
 #include "planners/prmplanning.h"
 
 using namespace OpenRAVE;
@@ -48,15 +48,15 @@ InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string&
     {
         return InterfaceBasePtr(new PRMPlanning(penv));
     }
-    else if( type == OpenRAVE::PT_Planner && interfacename == "classicprm" )
-    {
-        return InterfaceBasePtr(new ClassicPRM(penv));
-    }
-    else if ( type == PT_Planner && interfacename == "sblplanner" ) {
-        return InterfaceBasePtr(new SBLPlanner(penv));
-    } /*else if ( type == PT_Planner && interfacename == "vprmplanner" ) {
-                return InterfaceBasePtr(new VPRMPlanner(penv));
-        } */
+//    else if( type == OpenRAVE::PT_Planner && interfacename == "classicprm" )
+//    {
+//        return InterfaceBasePtr(new ClassicPRM(penv));
+//    }
+//    else if ( type == PT_Planner && interfacename == "sblplanner" ) {
+//        return InterfaceBasePtr(new SBLPlanner(penv));
+//    } /*else if ( type == PT_Planner && interfacename == "vprmplanner" ) {
+//                return InterfaceBasePtr(new VPRMPlanner(penv));
+//        } */
 
     return InterfaceBasePtr();
 }
@@ -64,9 +64,9 @@ InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string&
 void GetPluginAttributesValidated(PLUGININFO& info)
 {
     // planners
-    info.interfacenames[PT_Planner].push_back("ClassicPRM");
-    //     info.interfacenames[PT_Planner].push_back("VPRMPlanner");
-    info.interfacenames[PT_Planner].push_back("SBLPlanner");
+//    info.interfacenames[PT_Planner].push_back("ClassicPRM");
+//    //     info.interfacenames[PT_Planner].push_back("VPRMPlanner");
+//    info.interfacenames[PT_Planner].push_back("SBLPlanner");
 
     /// problems
     info.interfacenames[PT_ProblemInstance].push_back("PRMPlanning");
