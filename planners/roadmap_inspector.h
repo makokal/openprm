@@ -60,7 +60,28 @@ int RMapInspector::generateSamples()
 //! ============================================================================================
 bool RMapInspector::createGraph()
 {
+    RAVELOG_INFO("Creating the Roadmap graph\n");
 
+    for (std::vector<std::vector<double> >::iterator it = vv_samples.begin(); it != vv_samples.end(); it++)
+    {
+        node_t nd = g_roadmap->addNode((*it));
+        std::list<node_t> neighbors;
+
+        if (g_roadmap->findNN(nd, neighbors) == 0)
+        {
+            continue;
+        }
+
+        // add the neighbor edges;
+        for (std::list<node_t>::iterator lt = neighbors.begin(); lt != neighbors.end(); lt++)
+        {
+            g_roadmap->addEdge(nd, (*lt));
+        }
+    }
+
+
+    RAVELOG_INFO("Roadmap created\n");
+    return true;
 }
 
 //! ============================================================================================
