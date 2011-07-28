@@ -267,7 +267,8 @@ int PRMGraph::findNN ( node_t n, list< node_t >& l_neighbors )
 	}
 	
 	// sort the neighbors by distance to current node
-	l_dnodes.sort(compareNodes);
+    //! \todo fix sort error
+    //	l_dnodes.sort(compareNodes);
 	for ( std::list<dnode_t>::iterator k = l_dnodes.begin(); k != l_dnodes.end(); k++)
 	{
 		l_neighbors.push_front((*k).first);
@@ -323,9 +324,9 @@ bool PRMGraph::findPathAstar(node_t n_start, node_t n_goal, list< node_t >& l_pa
 	try
 	{
 		boost::astar_search(g_roadmap,
-							n_start,
-							distance_heuristic<graph_t, double, spatial_node*>(node_map, g_roadmap),
-							boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<vertex_t>(n_goal))
+                            n_start.node_id,
+                            distance_heuristic<graph_t, double, spatial_node*>(node_map, n_goal.node_id),
+                            boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<vertex_t>(n_goal.node_id))
 							);
 	}
 	catch ( found_goal )
