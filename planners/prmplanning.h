@@ -585,7 +585,7 @@ bool PRMPlanning::TestPrmGraph( ostream& sout, istream& sinput )
 
     boost::shared_ptr<RMapInspector> p_graph_test;
 
-    p_graph_test.reset(new RMapInspector(50));
+    p_graph_test.reset(new RMapInspector(p_robot, 50));
     p_graph_test->generateSamples();
     p_graph_test->createGraph();
     p_graph_test->renderGraph();

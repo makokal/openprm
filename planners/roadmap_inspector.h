@@ -2,6 +2,7 @@
 #define ROADMAP_INSPECTOR_H
 
 #include "../utils/prmgraph.h"
+#include "samplerbase.h"
 #include <boost/shared_ptr.hpp>
 
 namespace openprm
@@ -10,7 +11,7 @@ namespace openprm
 class RMapInspector
 {
 public:
-    RMapInspector(int m_samp);
+    RMapInspector(RobotBasePtr probot, int m_samp);
     virtual ~RMapInspector();
 
     int generateSamples();
@@ -19,24 +20,27 @@ public:
 
 private:
 
+    RobotBasePtr p_robot;
     int max_samples;
     std::vector<std::vector<double> > vv_samples;
     boost::shared_ptr<PRMGraph> g_roadmap;
-    SpaceSamplerBasePtr p_sampler;
+//    SpaceSamplerBasePtr p_sampler;
+    boost::shared_ptr<RandomSampler> p_sampler;
 
     GraphHandlePtr p_graph;
 };
 
 //! ============================================================================================
-RMapInspector::RMapInspector(int m_samp) : max_samples(m_samp)
+RMapInspector::RMapInspector(RobotBasePtr probot, int m_samp) : p_robot(probot), max_samples(m_samp)
 {
     vv_samples.clear();
 
     //initialize roadmap
-    g_roadmap.reset(new PRMGraph(7,20,50,5.0));
+    g_roadmap.reset(new PRMGraph(p_robot->GetActiveDOF(),20,50,5.0));
 
-    p_sampler = RaveCreateSpaceSampler("halton");
-    p_sampler->SetSpaceDOF(7);
+//    p_sampler = RaveCreateSpaceSampler("halton");
+//    p_sampler->SetSpaceDOF(7);
+    p_sampler.reset(new RandomSampler(p_robot));
 }
 
 RMapInspector::~RMapInspector() {}
@@ -49,7 +53,12 @@ int RMapInspector::generateSamples()
 
     while (k < max_samples)
     {
-        p_sampler->SampleSequence(v_samp, 1);
+//        p_sampler->SampleSequence(v_samp, 1);
+        if (!p_sampler->GenSingleSample(v_samp))
+        {
+            RAVELOG_WARN("Error in sampling\n");
+            continue;
+        }
 
         vv_samples.push_back(v_samp);
         v_samp.clear();
