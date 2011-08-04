@@ -98,14 +98,6 @@ bool RMapInspector::createGraph()
 //! ============================================================================================
 void RMapInspector::renderGraph()
 {
-//    EnvironmentBasePtr penv = RaveCreateEnvironment();
-
-    // render roadmap on the coin viewer;
-//    p_graph.reset(new GraphHandle());
-//    for (std::vector<std::vector<double> >::iterator it = vv_samples.begin(); it != vv_samples.end(); it++)
-//    {
-//        p_graph = OpenRAVE::EnvironmentBase::drawlinestrip((*it), (*it).size(), 3, 1.0f);
-//    }
 }
 
 

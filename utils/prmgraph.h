@@ -59,6 +59,14 @@ struct found_goal {};
 
 //! ===============================================================================================================
 //! Metrics and Utils
+
+//! general metric abstract class
+class Metric {
+    public:
+        virtual double computeLength(config_t q1, config_t q2) = 0;
+};
+
+
 class EMetric
 {
 public:
@@ -82,6 +90,14 @@ public:
         return sqrt ( d );
     }
 };
+
+/*
+class InfMetric
+{
+    public:
+        static double computeLen
+
+};*/
 
 //! ===============================================================================================================
 
