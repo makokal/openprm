@@ -5,9 +5,7 @@ To compile, run the following:
 
 	[Ensure you have all  OpenRAVE installed, check openrave.programmingvision.com to see how]
 
-	check out the source using;
-
-	hg clone ssh://hg@bitbucket.org/makokal/openprm	
+	check out the source
 	cd openprm
 	mkdir build
 	cd build
