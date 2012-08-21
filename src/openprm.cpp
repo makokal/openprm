@@ -1,5 +1,7 @@
 #include <openrave/plugin.h>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
 using namespace OpenRAVE;
 
 class PRMPlanner : public PlannerBase
