@@ -26,7 +26,8 @@
 #ifndef PRM_UTILS_H
 #define PRM_UTILS_H
 
-#include <rave/rave.h>
+//#include <rave/rave.h>
+#include <openrave/openrave.h>
 
 
 // include boost for vc++ only (to get typeof working)
