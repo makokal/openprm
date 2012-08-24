@@ -23,52 +23,34 @@
 /// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 /// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <openrave/plugin.h>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#ifndef PRMPARAMS_H
+#define PRMPARAMS_H
 
-using namespace OpenRAVE;
+#include <prm_utils.h>
 
-class PRMPlanner : public PlannerBase
+namespace openprm
+{
+
+class PRMParameters : public PlannerBase::PlannerParameters
 {
 public:
-    PRMPlanner(EnvironmentBasePtr penv, std::istream& ss) : PlannerBase(penv)
-    {
-        RegisterCommand("MyCommand",boost::bind(&PRMPlanner::MyCommand,this,_1,_2),
-                        "This is an example command");
-    }
-    virtual ~PRMPlanner() {}
+    PRMParameters();
 
-    bool MyCommand(std::ostream& sout, std::istream& sinput)
-    {
-        std::string input;
-        sinput >> input;
-        sout << "output";
-        return true;
-    }
+    unsigned int max_tries_;
+    unsigned int max_nodes_;
+    unsigned int max_edges_;
+    dReal neighbor_threshold_;
+
+protected:
+
+    bool processing_;
+
+    virtual bool serialize(std::ostream &output_stream) const;
+    BaseXMLReader::ProcessElement startElement(const std::string &name, const AttributesList &atts);
+    virtual bool endElement(const std::string &name);
+
 };
 
-
-// called to create a new plugin
-InterfaceBasePtr CreateInterfaceValidated(InterfaceType type, const std::string& interfacename, std::istream& sinput, EnvironmentBasePtr penv)
-{
-    if( type == PT_Planner && interfacename == "prmplanner" )
-    {
-        return InterfaceBasePtr(new PRMPlanner(penv,sinput));
-    }
-
-    return InterfaceBasePtr();
 }
 
-// called to query available plugins
-void GetPluginAttributesValidated(PLUGININFO& info)
-{
-    info.interfacenames[PT_Planner].push_back("PRMPlanner");
-
-}
-
-// called before plugin is terminated
-OPENRAVE_PLUGIN_API void DestroyPlugin()
-{
-}
-
+#endif // PRMPARAMS_H
