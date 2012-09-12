@@ -14,7 +14,11 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${OpenRAVE_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
 
-add_library(openprm SHARED src/openprm.cpp)
+add_library(openprm SHARED src/openprm.cpp
+                            src/prmproblem.cpp
+            )
+
 set_target_properties(openprm PROPERTIES COMPILE_FLAGS "${OpenRAVE_CXX_FLAGS}" LINK_FLAGS "${OpenRAVE_LINK_FLAGS}")
 target_link_libraries(openprm ${OpenRAVE_LIBRARIES})
-install(TARGETS openprm DESTINATION .)
+install(TARGETS openprm DESTINATION ${PROJECT_SOURCE_DIR}/install)
+#install(TARGETS openprm DESTINATION ${PLUGIN_INSTALL_DIR} )

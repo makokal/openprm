@@ -34,24 +34,23 @@ PRMProblem::PRMProblem(EnvironmentBasePtr penv) : ProblemInstance(penv)
     __description = "Planning using PRM based planners (Billy Okal)";
 
     /// Register new commands
-    RegisterCommand("RunPRM", boost::bind(&PRMPlanning::RunPRM, this, _1, _2),
+    RegisterCommand("RunPRM", boost::bind(&PRMProblem::RunPRM, this, _1, _2),
                     "Build the RoadMap and querry it, combines two steps (for single short querries)");
-    RegisterCommand("BuildRoadMap", boost::bind(&PRMPlanning::BuildRoadMap, this, _1, _2),
+
+    RegisterCommand("BuildRoadMap", boost::bind(&PRMProblem::BuildRoadMap, this, _1, _2),
                     "Build the RoadMap based on the current state of the Configuration Space");
-    RegisterCommand("RunQuery", boost::bind(&PRMPlanning::RunQuery, this, _1, _2),
+
+    RegisterCommand("RunQuery", boost::bind(&PRMProblem::RunQuery, this, _1, _2),
                     "Run a query on an already built roadmap");
 
-    RegisterCommand("Traj",boost::bind(&PRMPlanning::Traj,this,_1,_2),
-                    "Execute a trajectory from a file on the local filesystem");
-
-    RegisterCommand("GrabBody",boost::bind(&PRMPlanning::GrabBody,this,_1,_2),
+    RegisterCommand("GrabBody",boost::bind(&PRMProblem::GrabBody,this,_1,_2),
                     "Robot calls ::Grab on a body with its current manipulator");
 
-    RegisterCommand("ReleaseAll",boost::bind(&PRMPlanning::ReleaseAll,this,_1,_2),
+    RegisterCommand("ReleaseAll",boost::bind(&PRMProblem::ReleaseAll,this,_1,_2),
                     "Releases all grabbed bodies (RobotBase::ReleaseAllGrabbed).");
 
-    RegisterCommand("TestPrmGraph",boost::bind(&PRMPlanning::TestPrmGraph,this,_1,_2),
-                    "Test the prm graph by sampling configs and displaying map (PRMPlanning::TestPrmGraph).");
+    RegisterCommand("TestPrmGraph",boost::bind(&PRMProblem::TestPrmGraph,this,_1,_2),
+                    "Test the prm graph by sampling configs and displaying map (PRMProblem::TestPrmGraph).");
 
     reuseplanner_ = false;
 }
@@ -128,7 +127,7 @@ int PRMProblem::main(const string &args)
 
 
 
-void PRMProblem::SetActiveRobots(const vector &robots)
+void PRMProblem::SetActiveRobots(const vector<RobotBasePtr> &robots)
 {
     if ( robots.size() == 0 )
     {
@@ -206,7 +205,7 @@ bool PRMProblem::GrabBody(ostream &sout, istream &sinput)
 
     if ( ptarget == NULL )
     {
-        RAVELOG_INFO("ERROR PRMPlanning::GrabBody - Invalid body name.\n");
+        RAVELOG_INFO("ERROR PRMProblem::GrabBody - Invalid body name.\n");
         return false;
     }
 
@@ -231,74 +230,15 @@ bool PRMProblem::ReleaseAll(ostream &sout, istream &sinput)
 
 
 
-bool PRMProblem::Traj(ostream &sout, istream &sinput)
-{
-    string filename;
-    sinput >> filename;
-    if ( !sinput )
-        return false;
 
-    TrajectoryBasePtr trajectory = RaveCreateTrajectory(GetEnv(), robot_ptr_->GetDOF());
-
-    char sep = ' ';
-    if ( filename == "sep" )
-    {
-        sinput >> sep;
-        filename = getfilename_withseparator(sinput,sep);
-    }
-
-    if ( filename == "stream" )
-    {
-        // the trajectory is embedded in the stream
-        RAVELOG_VERBOSE("PRMPlanning: reading trajectory from stream\n");
-
-        if ( !trajectory->Read(sinput, robot_ptr_) )
-        {
-            RAVELOG_ERROR("PRMPlanning: failed to get trajectory\n");
-            return false;
-        }
-    }
-    else
-    {
-        RAVELOG_VERBOSE(str(boost::format("PRMPlanning: reading trajectory: %s\n")%filename));
-        ifstream f(filename.c_str());
-        if ( !trajectory->Read(f, robot_ptr_) )
-        {
-            RAVELOG_ERROR(str(boost::format("PRMPlanning: failed to read trajectory %s\n")%filename));
-            return false;
-        }
-    }
-
-    bool reset_transformations = false;
-    sinput >> reset_transformations;
-
-    if ( reset_transformations ) {
-        RAVELOG_VERBOSE("resetting transformations of trajectory\n");
-        Transform current_transform = robot_ptr_->GetTransform();
-        // set the transformation of every point to the current robot transformation
-        FOREACH(itpoint, trajectory->GetPoints()) {
-            itpoint->trans = current_transform;
-        }
-    }
-
-    RAVELOG_VERBOSE(str(boost::format("executing traj with %d points\n")%trajectory->GetPoints().size()));
-    robot_ptr_->SetMotion(trajectory);
-    sout << "1";
-
-    return true;
-}
-
-
-
-
-bool PRMProblem::SetActiveTrajectory(RobotBasePtr robot, TrajectoryBasePtr active_traj, bool execute, const string &strsavetraj, boost::shared_ptr pout)
+bool PRMProblem::SetActiveTrajectory(RobotBasePtr robot, TrajectoryBasePtr active_traj, bool execute, const string &strsavetraj, boost::shared_ptr<ostream> pout)
 {
     if	( active_traj->GetPoints().size() == 0 )
     {
         return false;
     }
 
-    active_traj->CalcTrajTiming(robot, pActiveTraj->GetInterpMethod(), true, true);
+    active_traj->CalcTrajTiming(robot, active_traj->GetInterpMethod(), true, true);
 
     bool execution_done = false;
     if ( execute ) {

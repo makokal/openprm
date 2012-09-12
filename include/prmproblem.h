@@ -56,7 +56,6 @@ protected:
 
     bool GrabBody ( ostream& sout, istream& sinput );
     bool ReleaseAll ( ostream& sout, istream& sinput );
-    bool Traj ( ostream& sout, istream& sinput );
     bool SetActiveTrajectory ( RobotBasePtr robot, TrajectoryBasePtr active_traj, bool execute, const string& strsavetraj, boost::shared_ptr<ostream> pout);
     bool RunPRM ( ostream& sout, istream& sinput );
     bool BuildRoadMap ( ostream& sout, istream& sinput );

@@ -26,6 +26,7 @@
 
 #include <prmparams.h>
 
+using namespace OpenRAVE;
 using namespace openprm;
 
 
@@ -45,7 +46,7 @@ PRMParameters::PRMParameters() :
 
 
 
-bool PRMParameters::serialize(std::ostream &output_stream)
+bool PRMParameters::serialize(std::ostream &output_stream) const
 {
     if (!PlannerParameters::serialize(output_stream))
     {

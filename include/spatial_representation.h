@@ -66,13 +66,14 @@ typedef boost::graph_traits<SpatialGraph>::edge_descriptor edge_t;
 class SpatialStructure
 {
 public:
-    SpatialStructure() : max_nodes_(100), max_edges_(1000), dimension_(7)
+    SpatialStructure() :
+        max_nodes_(100), no_nodes_(0), max_edges_(1000), no_edges_(0), dimension_(7)
     {
         graph_.clear();
     }
 
     SpatialStructure(int mnodes, int medges, int dim) :
-        max_nodes_(mnodes), max_edges_(medges), dimension_(dim)
+        max_nodes_(mnodes), no_nodes_(0), max_edges_(medges), no_edges_(0), dimension_(dim)
     {
         graph_.clear();
     }
@@ -81,8 +82,24 @@ public:
     /// add a vertex to the graph
     vertex_t addVertex(std::vector<dReal> config)
     {
+        /// check that we dont exceed max nodes
+        if ( no_nodes_ == max_nodes_ )
+        {
+            RAVELOG_WARN("SpatialStructure::addVertex - Max nodes reached, ignoring further nodes \n");
+            return;
+        }
+
+        /// check that the dimension of the configuration matches graph dimension
+        if ( config.size() != dimension_ )
+        {
+            RAVELOG_WARN("SpatialStructure::addVertex - dimension of configuration does not match graph dimension \n");
+            return;
+        }
+
         vertex_t v = boost::add_vertex(graph_);
         graph_[v].config = config;
+
+        no_nodes_++;
 
         return v;
     }
@@ -94,7 +111,14 @@ public:
         /// check if edge already exists
         if ( boost::edge(u,v, graph_).second )
         {
-            RAVELOG_WARN("SpatialStructure -- edge already exists \n");
+            RAVELOG_WARN("SpatialStructure::addEdge - edge already exists \n");
+            return false;
+        }
+
+        /// check that we dont exceed max edges
+        if ( no_edges_ == max_edges_ )
+        {
+            RAVELOG_WARN("SpatialStructure::addEdge - Max edges reached, ignoring further edges \n");
             return false;
         }
 
@@ -104,6 +128,8 @@ public:
         if (added)
         {
             graph_[e].length = length;
+            no_edges_++;
+
             return true;
         }
 
@@ -111,8 +137,8 @@ public:
     }
 
 protected:
-    int max_nodes_;
-    int max_edges_;
+    int max_nodes_, no_nodes_;
+    int max_edges_, no_edges_;
     int dimension_;
 
     SpatialGraph graph_;
